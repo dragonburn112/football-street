@@ -73,8 +73,6 @@ export default function CreateMatch({ players, onCreateMatch, onCancel, isLoadin
   };
 
   const handleSubmit = async (data: CreateMatch) => {
-    console.log("handleSubmit - selectedPlayers:", selectedPlayers);
-    console.log("handleSubmit - data:", data);
     
     if (selectedPlayers.length === 0) {
       toast({
