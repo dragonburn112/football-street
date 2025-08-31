@@ -22,6 +22,8 @@ export async function handleAuthRedirect() {
     // Handle specific Firebase auth errors
     if (error.code === 'auth/unauthorized-domain') {
       console.error("Domain not authorized. Add your domain to Firebase Console -> Authentication -> Settings -> Authorized domains");
+    } else if (error.message.includes('Invalid URL')) {
+      console.error("Invalid URL error - check Firebase authorized domains configuration");
     }
     return { error };
   }
