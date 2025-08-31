@@ -1,23 +1,24 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createPlayerCardSchema, type CreatePlayerCard } from "@shared/schema";
+import { playerFormSchema, type PlayerFormData } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 
 interface PlayerFormProps {
-  onCreatePlayer: (player: CreatePlayerCard) => Promise<void>;
+  onCreatePlayer: (player: PlayerFormData) => Promise<void>;
   isLoading: boolean;
   selectedMemberName?: string;
 }
 
 
 export default function PlayerForm({ onCreatePlayer, isLoading, selectedMemberName }: PlayerFormProps) {
-  const form = useForm<CreatePlayerCard>({
-    resolver: zodResolver(createPlayerCardSchema),
+  const form = useForm<PlayerFormData>({
+    resolver: zodResolver(playerFormSchema),
     defaultValues: {
       name: "",
+      club: "Street FC",
       profilePic: "⚽",
       pace: 50,
       shooting: 50,
@@ -39,7 +40,7 @@ export default function PlayerForm({ onCreatePlayer, isLoading, selectedMemberNa
     return overall;
   };
 
-  const onSubmit = (data: CreatePlayerCard) => {
+  const onSubmit = (data: PlayerFormData) => {
     const overall = calculateOverall();
     onCreatePlayer({ ...data, overall });
     form.reset();
@@ -82,6 +83,25 @@ export default function PlayerForm({ onCreatePlayer, isLoading, selectedMemberNa
                 )}
               />
               
+              
+              <FormField
+                control={form.control}
+                name="club"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Club Name</FormLabel>
+                    <FormControl>
+                      <Input 
+                        data-testid="input-club-name"
+                        placeholder="Enter club name" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="profilePic"

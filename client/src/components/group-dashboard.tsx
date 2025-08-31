@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { User } from "firebase/auth";
-import { Group, PlayerCard, CreatePlayerCard, Match, CreateMatch } from "@shared/schema";
-import { subscribeToGroup, subscribeToGroupPlayerCards, updatePlayerCard, deletePlayerCard, subscribeToGroupMatches, createMatch, isUserAdmin, promoteToAdmin, leaveGroup } from "@/lib/firebase";
+import { Group, PlayerCard, CreatePlayerCard, Match, CreateMatch, UnassignedPlayerCard } from "@shared/schema";
+import { subscribeToGroup, subscribeToGroupPlayerCards, updatePlayerCard, deletePlayerCard, subscribeToGroupMatches, createMatch, isUserAdmin, promoteToAdmin, leaveGroup, subscribeToUnassignedPlayerCards } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,7 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
   const [group, setGroup] = useState<Group | null>(null);
   const [playerCards, setPlayerCards] = useState<PlayerCard[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
+  const [unassignedCards, setUnassignedCards] = useState<UnassignedPlayerCard[]>([]);
   const [showTeamGenerator, setShowTeamGenerator] = useState(false);
   const [showCreateMatch, setShowCreateMatch] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
@@ -38,11 +39,13 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
     const unsubscribeGroup = subscribeToGroup(groupId, setGroup);
     const unsubscribeCards = subscribeToGroupPlayerCards(groupId, setPlayerCards);
     const unsubscribeMatches = subscribeToGroupMatches(groupId, setMatches);
+    const unsubscribeUnassigned = subscribeToUnassignedPlayerCards(groupId, setUnassignedCards);
 
     return () => {
       unsubscribeGroup();
       unsubscribeCards();
       unsubscribeMatches();
+      unsubscribeUnassigned();
     };
   }, [groupId]);
 
@@ -183,6 +186,7 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
         group={group}
         players={playerCards}
         matches={matches}
+        unassignedCards={unassignedCards}
         onClose={() => setShowAdminPanel(false)}
         onGroupDeleted={onLeaveGroup}
       />

@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithRedirect, GoogleAuthProvider, signInAnonymously, onAuthStateChanged, User } from "firebase/auth";
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, onSnapshot, query, where, serverTimestamp, Timestamp, deleteDoc, updateDoc } from "firebase/firestore";
-import { Group, PlayerCard, Match, CreateMatch, CreatePlayerCard } from "@shared/schema";
+import { Group, PlayerCard, Match, CreateMatch, CreatePlayerCard, UnassignedPlayerCard, CreateUnassignedPlayerCard, PlayerFormData } from "@shared/schema";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDbLukHyz1FHkFvOK6Lyiq3IN7uP_fm9MM",
@@ -134,7 +134,7 @@ export async function getUserGroups(userId: string): Promise<Group[]> {
 }
 
 // Create a player card for a specific member (admin function)
-export async function createPlayerCardForMember(groupId: string, memberUid: string, playerData: CreatePlayerCard, createdBy: User): Promise<PlayerCard> {
+export async function createPlayerCardForMember(groupId: string, memberUid: string, playerData: PlayerFormData, createdBy: User): Promise<PlayerCard> {
   try {
     // Check if player card already exists
     const existingCard = await getDoc(doc(db, 'groups', groupId, 'players', memberUid));
@@ -454,6 +454,102 @@ export async function leaveGroup(groupId: string, userId: string): Promise<void>
     console.error('Error leaving group:', error);
     throw error;
   }
+}
+
+// UNASSIGNED PLAYER CARDS MANAGEMENT
+
+// Create an unassigned player card (admin function)
+export async function createUnassignedPlayerCard(groupId: string, playerData: PlayerFormData, createdBy: User): Promise<UnassignedPlayerCard> {
+  try {
+    const cardData: Omit<UnassignedPlayerCard, 'id'> = {
+      ...playerData,
+      createdBy: createdBy.uid,
+      createdAt: serverTimestamp() as Timestamp,
+    };
+
+    const docRef = await addDoc(collection(db, 'groups', groupId, 'unassignedCards'), cardData);
+    return { ...cardData, id: docRef.id };
+  } catch (error) {
+    console.error('Error creating unassigned player card:', error);
+    throw error;
+  }
+}
+
+// Get all unassigned player cards for a group
+export async function getUnassignedPlayerCards(groupId: string): Promise<UnassignedPlayerCard[]> {
+  const cardsQuery = collection(db, 'groups', groupId, 'unassignedCards');
+  const querySnapshot = await getDocs(cardsQuery);
+  
+  const cards: UnassignedPlayerCard[] = [];
+  querySnapshot.forEach(doc => {
+    cards.push({ id: doc.id, ...doc.data() } as UnassignedPlayerCard);
+  });
+  
+  return cards;
+}
+
+// Subscribe to real-time unassigned player card updates
+export function subscribeToUnassignedPlayerCards(groupId: string, callback: (cards: UnassignedPlayerCard[]) => void) {
+  const cardsQuery = collection(db, 'groups', groupId, 'unassignedCards');
+  return onSnapshot(cardsQuery, (snapshot) => {
+    const cards: UnassignedPlayerCard[] = [];
+    snapshot.forEach(doc => {
+      cards.push({ id: doc.id, ...doc.data() } as UnassignedPlayerCard);
+    });
+    callback(cards);
+  });
+}
+
+// Assign an unassigned card to a member (admin function)
+export async function assignPlayerCardToMember(groupId: string, unassignedCardId: string, memberUid: string): Promise<PlayerCard> {
+  try {
+    // Get the unassigned card
+    const unassignedCardRef = doc(db, 'groups', groupId, 'unassignedCards', unassignedCardId);
+    const unassignedCardSnap = await getDoc(unassignedCardRef);
+    
+    if (!unassignedCardSnap.exists()) {
+      throw new Error('Unassigned card not found');
+    }
+    
+    const unassignedCard = { id: unassignedCardSnap.id, ...unassignedCardSnap.data() } as UnassignedPlayerCard;
+    
+    // Check if member already has a player card
+    const existingCard = await getDoc(doc(db, 'groups', groupId, 'players', memberUid));
+    if (existingCard.exists()) {
+      throw new Error('Member already has a player card');
+    }
+    
+    // Create assigned player card
+    const assignedCardData: Omit<PlayerCard, 'id'> = {
+      uid: memberUid,
+      name: unassignedCard.name,
+      club: unassignedCard.club,
+      profilePic: unassignedCard.profilePic,
+      pace: unassignedCard.pace,
+      shooting: unassignedCard.shooting,
+      passing: unassignedCard.passing,
+      dribbling: unassignedCard.dribbling,
+      defense: unassignedCard.defense,
+      physical: unassignedCard.physical,
+      overall: unassignedCard.overall,
+      createdAt: unassignedCard.createdAt,
+      updatedAt: serverTimestamp() as Timestamp,
+    };
+    
+    // Create the assigned card and delete the unassigned one
+    await setDoc(doc(db, 'groups', groupId, 'players', memberUid), assignedCardData);
+    await deleteDoc(unassignedCardRef);
+    
+    return { ...assignedCardData, id: memberUid };
+  } catch (error) {
+    console.error('Error assigning player card to member:', error);
+    throw error;
+  }
+}
+
+// Delete an unassigned player card (admin function)
+export async function deleteUnassignedPlayerCard(groupId: string, cardId: string): Promise<void> {
+  await deleteDoc(doc(db, 'groups', groupId, 'unassignedCards', cardId));
 }
 
 // Auth state listener

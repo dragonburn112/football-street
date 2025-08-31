@@ -25,6 +25,43 @@ export const createPlayerCardSchema = playerCardSchema.omit({
   updatedAt: true,
 });
 
+// Schema for unassigned player cards (cards created by admins but not assigned to members yet)
+export const unassignedPlayerCardSchema = z.object({
+  id: z.string(), // Unique ID for the unassigned card
+  name: z.string().min(1, "Player name is required"),
+  club: z.string().min(1, "Club name is required"),
+  profilePic: z.string().optional(), // URL or emoji for profile picture
+  pace: z.number().min(1).max(99),
+  shooting: z.number().min(1).max(99),
+  passing: z.number().min(1).max(99),
+  dribbling: z.number().min(1).max(99),
+  defense: z.number().min(1).max(99),
+  physical: z.number().min(1).max(99),
+  overall: z.number().min(1).max(99),
+  createdBy: z.string(), // UID of admin who created this card
+  createdAt: z.any(), // Firebase Timestamp
+});
+
+export const createUnassignedPlayerCardSchema = unassignedPlayerCardSchema.omit({
+  id: true,
+  createdBy: true,
+  createdAt: true,
+});
+
+// Schema for player form that works with both assigned and unassigned cards
+export const playerFormSchema = z.object({
+  name: z.string().min(1, "Player name is required"),
+  club: z.string().min(1, "Club name is required"),
+  profilePic: z.string().optional(),
+  pace: z.number().min(1).max(99),
+  shooting: z.number().min(1).max(99),
+  passing: z.number().min(1).max(99),
+  dribbling: z.number().min(1).max(99),
+  defense: z.number().min(1).max(99),
+  physical: z.number().min(1).max(99),
+  overall: z.number().min(1).max(99),
+});
+
 export const groupSchema = z.object({
   id: z.string(),
   code: z.string(),
@@ -83,6 +120,9 @@ export const createMatchSchema = matchSchema.omit({
 
 export type PlayerCard = z.infer<typeof playerCardSchema>;
 export type CreatePlayerCard = z.infer<typeof createPlayerCardSchema>;
+export type UnassignedPlayerCard = z.infer<typeof unassignedPlayerCardSchema>;
+export type CreateUnassignedPlayerCard = z.infer<typeof createUnassignedPlayerCardSchema>;
+export type PlayerFormData = z.infer<typeof playerFormSchema>;
 export type Group = z.infer<typeof groupSchema>;
 export type CreateGroup = z.infer<typeof createGroupSchema>;
 export type JoinGroup = z.infer<typeof joinGroupSchema>;
