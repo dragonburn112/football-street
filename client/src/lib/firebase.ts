@@ -274,7 +274,7 @@ function generateBalancedTeams(players: PlayerCard[], numberOfTeams: number): { 
   // Distribute players using snake draft (1-2-3-3-2-1 pattern for 3 teams)
   sortedPlayers.forEach((player, index) => {
     const teamIndex = index % numberOfTeams;
-    teams[teamIndex].players.push(player.uid);
+    teams[teamIndex].players.push(player.id);
     
     // Add to team stats
     teams[teamIndex].totalStats.pace += player.pace;
@@ -306,7 +306,7 @@ function generateBalancedTeams(players: PlayerCard[], numberOfTeams: number): { 
 // Create a new match with team generation
 export async function createMatch(groupId: string, matchData: CreateMatch, allPlayers: PlayerCard[], user: User): Promise<Match> {
   // Get selected players
-  const selectedPlayers = allPlayers.filter(player => matchData.selectedPlayerIds.includes(player.uid));
+  const selectedPlayers = allPlayers.filter(player => matchData.selectedPlayerIds.includes(player.id));
   
   // Generate balanced teams
   const teams = generateBalancedTeams(selectedPlayers, matchData.numberOfTeams);
