@@ -28,17 +28,7 @@ export default function MatchTab({ match, players, group, user, onClose }: Match
   }, {} as Record<string, PlayerCard>);
 
   const getPlayersByTeam = (teamPlayerIds: string[]) => {
-    console.log("Looking up players for team:", teamPlayerIds);
-    console.log("Available player IDs:", Object.keys(playerLookup));
-    const foundPlayers = teamPlayerIds.map(id => {
-      const player = playerLookup[id];
-      if (!player) {
-        console.log("Missing player for ID:", id);
-      }
-      return player;
-    }).filter(Boolean);
-    console.log("Found players:", foundPlayers.length);
-    return foundPlayers;
+    return teamPlayerIds.map(id => playerLookup[id]).filter(Boolean);
   };
 
   const handleShuffleTeams = async () => {

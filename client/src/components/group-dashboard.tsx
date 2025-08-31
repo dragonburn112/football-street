@@ -111,7 +111,16 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
 
   const handleCreateMatch = async (matchData: CreateMatch) => {
     try {
-      await createMatch(groupId, matchData, playerCards, user);
+      // Pass the same combined array of players that was used in the form
+      const allPlayers = [...playerCards, ...unassignedCards.map((card) => ({
+        ...card,
+        id: `unassigned-${card.id}`,
+        uid: '',
+        createdAt: card.createdAt,
+        updatedAt: card.createdAt,
+      }))];
+      
+      await createMatch(groupId, matchData, allPlayers, user);
       setShowCreateMatch(false);
       toast({
         title: "Success",
