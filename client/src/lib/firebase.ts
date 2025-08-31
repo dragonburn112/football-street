@@ -441,6 +441,41 @@ export async function promoteToAdmin(groupId: string, userId: string): Promise<v
   await updateDoc(groupRef, { members: updatedMembers });
 }
 
+// Update group name (admin only)
+export async function updateGroupName(groupId: string, newName: string): Promise<void> {
+  const groupRef = doc(db, 'groups', groupId);
+  const groupSnap = await getDoc(groupRef);
+  
+  if (!groupSnap.exists()) {
+    throw new Error('Group not found');
+  }
+  
+  await updateDoc(groupRef, { name: newName });
+}
+
+// Remove member from group (admin only)
+export async function removeMemberFromGroup(groupId: string, userId: string): Promise<void> {
+  const groupRef = doc(db, 'groups', groupId);
+  const groupSnap = await getDoc(groupRef);
+  
+  if (!groupSnap.exists()) {
+    throw new Error('Group not found');
+  }
+  
+  const group = { id: groupSnap.id, ...groupSnap.data() } as Group;
+  const updatedMembers = group.members.filter(member => member.uid !== userId);
+  
+  // Delete the user's player card if it exists
+  try {
+    await deleteDoc(doc(db, 'groups', groupId, 'players', userId));
+  } catch (error) {
+    // Player card might not exist, continue anyway
+    console.log('No player card to delete for removed user');
+  }
+  
+  await updateDoc(groupRef, { members: updatedMembers });
+}
+
 // Check if user is admin in group
 export function isUserAdmin(group: Group, userId: string): boolean {
   const member = group.members.find(m => m.uid === userId);

@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { User } from "firebase/auth";
 import { type Group, type PlayerCard, type Match, type CreatePlayerCard, type UnassignedPlayerCard, type CreateUnassignedPlayerCard, type PlayerFormData } from "@shared/schema";
-import { promoteToAdmin, shuffleMatchTeams, deleteMatch, createPlayerCardForMember, deleteGroup, createUnassignedPlayerCard, subscribeToUnassignedPlayerCards, assignPlayerCardToMember, deleteUnassignedPlayerCard } from "@/lib/firebase";
+import { promoteToAdmin, shuffleMatchTeams, deleteMatch, createPlayerCardForMember, deleteGroup, createUnassignedPlayerCard, subscribeToUnassignedPlayerCards, assignPlayerCardToMember, deleteUnassignedPlayerCard, updateGroupName, removeMemberFromGroup } from "@/lib/firebase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +26,8 @@ export default function AdminPanel({ user, group, players, matches, unassignedCa
   const [loading, setLoading] = useState<string | null>(null);
   const [showCreatePlayer, setShowCreatePlayer] = useState(false);
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
+  const [editingGroupName, setEditingGroupName] = useState(false);
+  const [newGroupName, setNewGroupName] = useState(group.name);
 
   const handlePromoteUser = async (userId: string) => {
     setLoading(`promote-${userId}`);
@@ -37,6 +41,55 @@ export default function AdminPanel({ user, group, players, matches, unassignedCa
       toast({
         title: "Error",
         description: "Failed to promote user",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleUpdateGroupName = async () => {
+    if (!newGroupName.trim() || newGroupName === group.name) {
+      setEditingGroupName(false);
+      setNewGroupName(group.name);
+      return;
+    }
+
+    setLoading('update-group-name');
+    try {
+      await updateGroupName(group.id, newGroupName.trim());
+      toast({
+        title: "Success",
+        description: "Group name updated!",
+      });
+      setEditingGroupName(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update group name",
+        variant: "destructive",
+      });
+      setNewGroupName(group.name);
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleRemoveMember = async (userId: string, displayName: string) => {
+    const confirmed = confirm(`Are you sure you want to remove "${displayName}" from the group? They will lose their player card and access to the group.`);
+    if (!confirmed) return;
+
+    setLoading(`remove-${userId}`);
+    try {
+      await removeMemberFromGroup(group.id, userId);
+      toast({
+        title: "Success",
+        description: `${displayName} has been removed from the group.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to remove member",
         variant: "destructive",
       });
     } finally {
@@ -85,6 +138,7 @@ export default function AdminPanel({ user, group, players, matches, unassignedCa
   };
 
   const nonAdminMembers = group.members.filter(member => !member.isAdmin);
+  const removableMembers = group.members.filter(member => member.uid !== user.uid);
   
   // Get members without player cards
   const membersWithCards = players.map(p => p.uid);
@@ -213,9 +267,10 @@ export default function AdminPanel({ user, group, players, matches, unassignedCa
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="players" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="players">Assign Cards</TabsTrigger>
                 <TabsTrigger value="members">Member Roles</TabsTrigger>
+                <TabsTrigger value="group">Group Settings</TabsTrigger>
                 <TabsTrigger value="matches">Match Control</TabsTrigger>
               </TabsList>
               
@@ -387,6 +442,131 @@ export default function AdminPanel({ user, group, players, matches, unassignedCa
                         ))}
                       </div>
                     )}
+                  </div>
+
+                  {/* Member Removal Section */}
+                  <div>
+                    <h3 className="font-medium mb-4 flex items-center gap-2">
+                      <i className="fas fa-user-minus text-red-500"></i>
+                      Remove Members
+                    </h3>
+                    
+                    {removableMembers.length === 0 ? (
+                      <div className="text-center py-8">
+                        <i className="fas fa-users text-muted-foreground text-4xl mb-4"></i>
+                        <p className="text-muted-foreground">No members available to remove.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {removableMembers.map((member) => (
+                          <div key={member.uid} className="flex items-center justify-between p-3 border rounded-lg">
+                            <div>
+                              <p className="font-medium">{member.displayName}</p>
+                              <p className="text-sm text-muted-foreground">
+                                Member since {new Date(member.joinedAt).toLocaleDateString()} 
+                                {member.isAdmin && <span className="text-yellow-600 ml-2">• Admin</span>}
+                              </p>
+                            </div>
+                            <Button
+                              data-testid={`button-remove-${member.uid}`}
+                              onClick={() => handleRemoveMember(member.uid, member.displayName)}
+                              disabled={loading === `remove-${member.uid}`}
+                              variant="destructive"
+                              size="sm"
+                            >
+                              {loading === `remove-${member.uid}` ? (
+                                <i className="fas fa-spinner fa-spin mr-2"></i>
+                              ) : (
+                                <i className="fas fa-user-times mr-2"></i>
+                              )}
+                              Remove
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="group" className="mt-6">
+                <div className="space-y-6">
+                  {/* Group Name Section */}
+                  <div>
+                    <h3 className="font-medium mb-4 flex items-center gap-2">
+                      <i className="fas fa-edit text-primary"></i>
+                      Group Name
+                    </h3>
+                    
+                    <div className="space-y-4">
+                      {editingGroupName ? (
+                        <div className="flex gap-2">
+                          <div className="flex-1">
+                            <Label htmlFor="group-name">Group Name</Label>
+                            <Input
+                              id="group-name"
+                              data-testid="input-group-name"
+                              value={newGroupName}
+                              onChange={(e) => setNewGroupName(e.target.value)}
+                              placeholder="Enter group name"
+                              maxLength={50}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  handleUpdateGroupName();
+                                } else if (e.key === 'Escape') {
+                                  setEditingGroupName(false);
+                                  setNewGroupName(group.name);
+                                }
+                              }}
+                              disabled={loading === 'update-group-name'}
+                            />
+                          </div>
+                          <div className="flex gap-2 items-end">
+                            <Button
+                              data-testid="button-save-group-name"
+                              onClick={handleUpdateGroupName}
+                              disabled={loading === 'update-group-name'}
+                              size="sm"
+                            >
+                              {loading === 'update-group-name' ? (
+                                <i className="fas fa-spinner fa-spin mr-2"></i>
+                              ) : (
+                                <i className="fas fa-check mr-2"></i>
+                              )}
+                              Save
+                            </Button>
+                            <Button
+                              data-testid="button-cancel-group-name"
+                              onClick={() => {
+                                setEditingGroupName(false);
+                                setNewGroupName(group.name);
+                              }}
+                              variant="outline"
+                              size="sm"
+                              disabled={loading === 'update-group-name'}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between p-3 border rounded-lg">
+                          <div>
+                            <p className="font-medium">{group.name}</p>
+                            <p className="text-sm text-muted-foreground">Current group name</p>
+                          </div>
+                          <Button
+                            data-testid="button-edit-group-name"
+                            onClick={() => setEditingGroupName(true)}
+                            variant="outline"
+                            size="sm"
+                          >
+                            <i className="fas fa-edit mr-2"></i>
+                            Edit Name
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </TabsContent>

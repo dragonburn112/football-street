@@ -36,13 +36,13 @@ export default function PlayerCardView({ player, onEdit, onDelete, isOwner, canE
   return (
     <div 
       data-testid={`card-player-${player.id}`}
-      className={`${getCardStyle()} rounded-lg p-3 relative transform transition-all duration-300 hover:scale-105`}
+      className={`${getCardStyle()} rounded-lg p-2 relative transform transition-all duration-300 hover:scale-105`}
     >
-      {/* Overall Rating */}
-      <div className="text-center mb-2">
+      {/* Overall Rating - Larger and more prominent */}
+      <div className="text-center mb-3">
         <div 
           data-testid={`text-overall-${player.id}`}
-          className="text-3xl font-black text-white"
+          className="text-4xl font-black text-white leading-none"
           style={{textShadow: '2px 2px 4px rgba(0,0,0,0.9)'}}
         >
           {player.overall}
@@ -50,8 +50,8 @@ export default function PlayerCardView({ player, onEdit, onDelete, isOwner, canE
       </div>
       
       {/* Player Info - More compact */}
-      <div className="bg-white/10 rounded-lg p-2 mb-2">
-        <div className="w-10 h-12 bg-white/20 rounded mx-auto mb-1 flex items-center justify-center">
+      <div className="bg-white/10 rounded-lg p-2 mb-3">
+        <div className="w-12 h-14 bg-white/20 rounded mx-auto mb-2 flex items-center justify-center">
           {player.profilePic ? (
             player.profilePic.startsWith('/objects/') ? (
               <img 
@@ -63,30 +63,30 @@ export default function PlayerCardView({ player, onEdit, onDelete, isOwner, canE
                 }}
               />
             ) : (
-              <span className="text-lg">{player.profilePic}</span>
+              <span className="text-xl">{player.profilePic}</span>
             )
           ) : (
-            <i className="fas fa-user text-white/60 text-sm"></i>
+            <i className="fas fa-user text-white/60 text-lg"></i>
           )}
         </div>
         <div className="text-center">
           <div 
             data-testid={`text-name-${player.id}`}
-            className="font-bold text-white text-xs"
+            className="font-bold text-white text-sm leading-tight"
             style={{textShadow: '1px 1px 2px rgba(0,0,0,0.8)'}}
           >
             {player.name}
           </div>
           {isOwner && (
-            <div className="mt-0.5">
-              <span className="text-xs bg-blue-500/20 text-blue-300 px-1 py-0.5 rounded">
+            <div className="mt-1">
+              <span className="text-xs bg-blue-500/30 text-blue-200 px-2 py-0.5 rounded">
                 You
               </span>
             </div>
           )}
           <div 
             data-testid={`text-role-${player.id}`}
-            className={`text-xs mt-0.5 flex items-center justify-center gap-1 ${getRoleColor(player.overall)}`}
+            className={`text-xs mt-1 flex items-center justify-center gap-1 ${getRoleColor(player.overall)} font-medium`}
           >
             <span>{getPlayerRole(player).icon}</span>
             <span>{getPlayerRole(player).title}</span>
@@ -94,31 +94,31 @@ export default function PlayerCardView({ player, onEdit, onDelete, isOwner, canE
         </div>
       </div>
       
-      {/* Stats - Moved much higher */}
-      <div className="bg-white/10 rounded-lg p-2 grid grid-cols-2 gap-y-1 gap-x-2 text-xs text-white font-medium" style={{textShadow: '1px 1px 2px rgba(0,0,0,0.8)'}}>
+      {/* Stats - More compact and readable */}
+      <div className="bg-white/15 rounded-lg p-2 grid grid-cols-2 gap-y-1.5 gap-x-3 text-sm text-white font-bold" style={{textShadow: '1px 1px 2px rgba(0,0,0,0.8)'}}>
         <div className="flex justify-between">
-          <span className="font-bold">PAC</span>
-          <span data-testid={`stat-pace-${player.id}`}>{player.pace}</span>
+          <span className="text-white/90">PAC</span>
+          <span data-testid={`stat-pace-${player.id}`} className="text-white">{player.pace}</span>
         </div>
         <div className="flex justify-between">
-          <span className="font-bold">SHO</span>
-          <span data-testid={`stat-shooting-${player.id}`}>{player.shooting}</span>
+          <span className="text-white/90">SHO</span>
+          <span data-testid={`stat-shooting-${player.id}`} className="text-white">{player.shooting}</span>
         </div>
         <div className="flex justify-between">
-          <span className="font-bold">PAS</span>
-          <span data-testid={`stat-passing-${player.id}`}>{player.passing}</span>
+          <span className="text-white/90">PAS</span>
+          <span data-testid={`stat-passing-${player.id}`} className="text-white">{player.passing}</span>
         </div>
         <div className="flex justify-between">
-          <span className="font-bold">DRI</span>
-          <span data-testid={`stat-dribbling-${player.id}`}>{player.dribbling}</span>
+          <span className="text-white/90">DRI</span>
+          <span data-testid={`stat-dribbling-${player.id}`} className="text-white">{player.dribbling}</span>
         </div>
         <div className="flex justify-between">
-          <span className="font-bold">DEF</span>
-          <span data-testid={`stat-defense-${player.id}`}>{player.defense}</span>
+          <span className="text-white/90">DEF</span>
+          <span data-testid={`stat-defense-${player.id}`} className="text-white">{player.defense}</span>
         </div>
         <div className="flex justify-between">
-          <span className="font-bold">PHY</span>
-          <span data-testid={`stat-physical-${player.id}`}>{player.physical}</span>
+          <span className="text-white/90">PHY</span>
+          <span data-testid={`stat-physical-${player.id}`} className="text-white">{player.physical}</span>
         </div>
       </div>
       
