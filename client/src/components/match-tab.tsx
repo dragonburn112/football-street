@@ -1,12 +1,13 @@
 import { User } from "firebase/auth";
 import { type Match, type PlayerCard, type Group } from "@shared/schema";
-import { shuffleMatchTeams, deleteMatch, isUserAdmin } from "@/lib/firebase";
+import { shuffleMatchTeams, deleteMatch, updateMatch, isUserAdmin } from "@/lib/firebase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { getPlayerRole, getRoleColor } from "@/lib/player-roles";
+import GameSettingsModal from "./game-settings-modal";
 
 interface MatchTabProps {
   match: Match;
@@ -19,6 +20,7 @@ interface MatchTabProps {
 export default function MatchTab({ match, players, group, user, onClose }: MatchTabProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
+  const [showGameSettings, setShowGameSettings] = useState(false);
   
   const userIsAdmin = isUserAdmin(group, user.uid);
   
@@ -48,6 +50,24 @@ export default function MatchTab({ match, players, group, user, onClose }: Match
       });
     } finally {
       setLoading(null);
+    }
+  };
+
+  const handleSaveGameSettings = async (settings: Partial<Match>) => {
+    try {
+      await updateMatch(group.id, match.id, settings);
+      toast({
+        title: "Success",
+        description: "Game settings updated!",
+      });
+      // Refresh page to show updated settings
+      window.location.reload();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update settings",
+        variant: "destructive",
+      });
     }
   };
 
@@ -109,6 +129,16 @@ export default function MatchTab({ match, players, group, user, onClose }: Match
               
               {userIsAdmin && (
                 <div className="flex gap-2">
+                  <Button
+                    data-testid="button-game-settings"
+                    onClick={() => setShowGameSettings(true)}
+                    disabled={loading !== null}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <i className="fas fa-cog mr-2"></i>
+                    Settings
+                  </Button>
                   <Button
                     data-testid="button-shuffle-teams"
                     onClick={handleShuffleTeams}
@@ -191,6 +221,15 @@ export default function MatchTab({ match, players, group, user, onClose }: Match
             );
           })}
         </div>
+        
+        {/* Game Settings Modal */}
+        <GameSettingsModal
+          open={showGameSettings}
+          onClose={() => setShowGameSettings(false)}
+          match={match}
+          onSave={handleSaveGameSettings}
+          loading={loading !== null}
+        />
       </div>
     </div>
   );
