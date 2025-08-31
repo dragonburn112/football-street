@@ -27,10 +27,29 @@ provider.addScope('profile');
 
 export const signInWithGoogle = async () => {
   try {
-    console.log("Initiating Google sign-in...");
+    console.log("🚀 INITIATING GOOGLE SIGN-IN...");
+    
+    // Sign out any existing user (including anonymous users)
+    if (auth.currentUser) {
+      console.log("🔄 Signing out existing user:", {
+        uid: auth.currentUser.uid,
+        isAnonymous: auth.currentUser.isAnonymous
+      });
+      await auth.signOut();
+    }
+    
+    console.log("📋 Provider config:", {
+      providerId: provider.providerId
+    });
+    
     await signInWithRedirect(auth, provider);
+    console.log("✅ signInWithRedirect completed successfully");
   } catch (error: any) {
-    console.error("Google sign-in error:", error);
+    console.error("❌ GOOGLE SIGN-IN ERROR:", {
+      code: error.code,
+      message: error.message,
+      stack: error.stack
+    });
     throw error;
   }
 };

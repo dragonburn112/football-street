@@ -15,24 +15,47 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
   const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log("🔵 AuthWrapper: Setting up auth listener");
+    
     const unsubscribe = onAuthStateChange((user) => {
-      console.log("Auth state changed:", user?.displayName || user?.email || "No user");
+      console.log("🔥 Auth state changed:", {
+        hasUser: !!user,
+        uid: user?.uid,
+        email: user?.email,
+        displayName: user?.displayName,
+        isAnonymous: user?.isAnonymous
+      });
+      
       setUser(user);
       setLoading(false);
     });
 
-    // Handle redirect result
-    handleAuthRedirect().then((result) => {
-      if (result?.user) {
-        console.log("Redirect auth successful:", result.user.displayName);
-        setUser(result.user);
+    // Handle redirect result immediately
+    console.log("🔍 Checking for redirect result...");
+    handleAuthRedirect()
+      .then((result) => {
+        console.log("📱 Redirect result:", result);
+        if (result?.user) {
+          console.log("✅ Redirect auth successful:", {
+            uid: result.user.uid,
+            email: result.user.email,
+            displayName: result.user.displayName
+          });
+          setUser(result.user);
+          setLoading(false);
+        } else if (result?.error) {
+          console.error("❌ Redirect auth error:", result.error);
+          setAuthError(result.error.message);
+          setLoading(false);
+        } else {
+          console.log("ℹ️ No redirect result found");
+        }
+      })
+      .catch((error) => {
+        console.error("💥 Redirect handling failed:", error);
+        setAuthError("Authentication failed");
         setLoading(false);
-      } else if (result?.error) {
-        console.error("Redirect auth error:", result.error);
-        setAuthError(result.error.message);
-        setLoading(false);
-      }
-    });
+      });
 
     return unsubscribe;
   }, []);
@@ -75,9 +98,12 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
               data-testid="button-sign-in-google"
               onClick={async () => {
                 try {
+                  console.log("🔘 User clicked Google sign-in button");
                   setAuthError(null);
                   await signInWithGoogle();
+                  console.log("🎯 Google sign-in initiated successfully");
                 } catch (error: any) {
+                  console.error("🚨 Google sign-in button error:", error);
                   setAuthError(error.message);
                 }
               }}

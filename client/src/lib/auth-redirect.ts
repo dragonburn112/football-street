@@ -1,26 +1,38 @@
 import { getRedirectResult, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "./firebase";
 
-let redirectHandled = false;
-
 export async function handleAuthRedirect() {
-  if (redirectHandled) return null;
-  
   try {
-    console.log("Checking for redirect result...");
+    console.log("🔍 handleAuthRedirect: Getting redirect result from Firebase...");
     const result = await getRedirectResult(auth);
-    redirectHandled = true;
+    
+    console.log("📥 getRedirectResult returned:", {
+      hasResult: !!result,
+      hasUser: !!result?.user,
+      userEmail: result?.user?.email,
+      userDisplayName: result?.user?.displayName,
+      operationType: result?.operationType,
+      providerId: result?.providerId
+    });
     
     if (result && result.user) {
-      console.log("User signed in via redirect:", result.user.displayName || result.user.email);
+      console.log("✅ SUCCESS: User signed in via redirect:", {
+        uid: result.user.uid,
+        email: result.user.email,
+        displayName: result.user.displayName,
+        providerData: result.user.providerData
+      });
       return { user: result.user };
     } else {
-      console.log("No redirect result found");
+      console.log("ℹ️ No redirect result - user not signed in via redirect");
       return null;
     }
   } catch (error: any) {
-    redirectHandled = true;
-    console.error("Auth redirect error:", error.code, error.message);
+    console.error("❌ REDIRECT ERROR:", {
+      code: error.code,
+      message: error.message,
+      stack: error.stack
+    });
     return { error };
   }
 }
