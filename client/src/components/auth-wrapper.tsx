@@ -45,7 +45,7 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
             <div className="mx-auto mb-4">
               <i className="fas fa-futbol text-primary text-4xl"></i>
             </div>
-            <CardTitle className="text-2xl">Street Football Cards</CardTitle>
+            <CardTitle className="text-2xl">FootballStreet</CardTitle>
             <CardDescription>
               Create player cards and join groups to play with friends
             </CardDescription>

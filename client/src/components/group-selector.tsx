@@ -57,7 +57,7 @@ export default function GroupSelector({
         <div className="text-center mb-8">
           <i className="fas fa-futbol text-primary text-5xl mb-4"></i>
           <h1 className="text-3xl font-bold text-foreground mb-2">
-            Street Football Cards
+            FootballStreet
           </h1>
           <p className="text-muted-foreground">
             Welcome, {user.displayName || 'Player'}!

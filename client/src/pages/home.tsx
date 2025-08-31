@@ -94,7 +94,7 @@ export default function Home() {
             <div>
               <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
                 <i className="fas fa-futbol text-primary"></i>
-                Street Football Cards
+                FootballStreet
               </h1>
               <p className="text-muted-foreground mt-1">Create, manage and export your ultimate player cards</p>
             </div>

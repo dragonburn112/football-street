@@ -1,4 +1,5 @@
 import { PlayerCard } from "@shared/schema";
+import { getPlayerRole, getRoleColor } from "@/lib/player-roles";
 
 interface PlayerCardProps {
   player: PlayerCard;
@@ -66,10 +67,11 @@ export default function PlayerCardView({ player, onEdit, onDelete, isOwner, canE
             {player.name}
           </div>
           <div 
-            data-testid={`text-club-${player.id}`}
-            className="text-white/80 text-xs mt-1"
+            data-testid={`text-role-${player.id}`}
+            className={`text-xs mt-1 flex items-center justify-center gap-1 ${getRoleColor(player.overall)}`}
           >
-            {player.club}
+            <span>{getPlayerRole(player).icon}</span>
+            <span>{getPlayerRole(player).title}</span>
           </div>
           {isOwner && (
             <div className="mt-1">

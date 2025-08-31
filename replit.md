@@ -1,4 +1,4 @@
-# Street Football Cards - Group-Based Mobile App
+# FootballStreet - Group-Based Mobile App
 
 ## Overview
 
