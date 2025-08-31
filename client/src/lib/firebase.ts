@@ -4,26 +4,16 @@ import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, onSnaps
 import { Group, PlayerCard, Match, CreateMatch, CreatePlayerCard, UnassignedPlayerCard, CreateUnassignedPlayerCard, PlayerFormData } from "@shared/schema";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebasestorage.app`,
+  apiKey: "AIzaSyDbLukHyz1FHkFvOK6Lyiq3IN7uP_fm9MM",
+  authDomain: "footballstreet-2c7bb.firebaseapp.com",
+  projectId: "footballstreet-2c7bb",
+  storageBucket: "footballstreet-2c7bb.firebasestorage.app",
   messagingSenderId: "59591760301",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  appId: "1:59591760301:web:cce4aa07129481e997e924",
   measurementId: "G-9WY7BMG6T1"
 };
 
-// Initialize Firebase app only once
-import { getApps, getApp } from 'firebase/app';
-
-let app;
-const existingApps = getApps();
-if (existingApps.length > 0) {
-  app = getApp();
-} else {
-  app = initializeApp(firebaseConfig);
-}
-
+const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
