@@ -143,98 +143,43 @@ export default function MatchTab({ match, players, group, user, onClose }: Match
           </CardHeader>
         </Card>
 
-        {/* Teams Display */}
-        <div className="grid gap-6">
+        {/* Teams Display - Clean Design */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {match.teams.map((team, index) => {
             const teamPlayers = getPlayersByTeam(team.players);
+            const isTeamA = index === 0;
             
             return (
-              <Card key={index} className="border-l-4 border-l-primary">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg flex items-center gap-3">
-                      <div className={`w-6 h-6 rounded-full ${
-                        index === 0 ? 'bg-blue-500' : 
-                        index === 1 ? 'bg-red-500' : 'bg-green-500'
-                      }`}></div>
-                      {team.name}
-                    </CardTitle>
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">Team Rating</p>
-                      <p 
-                        data-testid={`team-overall-${index}`}
-                        className="text-2xl font-bold text-primary"
-                      >
-                        {team.totalStats.overall}
-                      </p>
-                    </div>
+              <div 
+                key={index} 
+                className={`border rounded-lg p-4 ${isTeamA ? 'bg-blue-500/5 border-blue-500/20' : 'bg-red-500/5 border-red-500/20'}`}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className={`font-medium flex items-center gap-2 ${isTeamA ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}>
+                    <i className="fas fa-shield-alt"></i>
+                    {team.name}
+                  </h4>
+                  <div className={`text-sm font-bold ${isTeamA ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}>
+                    Team Rating: {team.totalStats.overall}
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {/* Team Stats */}
-                    <div className="grid grid-cols-3 gap-2 text-sm">
-                      <div className="text-center p-3 bg-muted/50 rounded">
-                        <p className="text-muted-foreground">PAC</p>
-                        <p className="font-bold text-lg">{team.totalStats.pace}</p>
+                </div>
+                <div className="space-y-2">
+                  {teamPlayers.map((player) => (
+                    <div key={player.id} className="flex items-center gap-2 p-2 bg-background/50 rounded">
+                      <div className={`w-8 h-8 ${isTeamA ? 'bg-blue-500' : 'bg-red-500'} rounded-full flex items-center justify-center text-white text-xs font-bold`}>
+                        {player.overall}
                       </div>
-                      <div className="text-center p-3 bg-muted/50 rounded">
-                        <p className="text-muted-foreground">SHO</p>
-                        <p className="font-bold text-lg">{team.totalStats.shooting}</p>
-                      </div>
-                      <div className="text-center p-3 bg-muted/50 rounded">
-                        <p className="text-muted-foreground">PAS</p>
-                        <p className="font-bold text-lg">{team.totalStats.passing}</p>
-                      </div>
-                      <div className="text-center p-3 bg-muted/50 rounded">
-                        <p className="text-muted-foreground">DRI</p>
-                        <p className="font-bold text-lg">{team.totalStats.dribbling}</p>
-                      </div>
-                      <div className="text-center p-3 bg-muted/50 rounded">
-                        <p className="text-muted-foreground">DEF</p>
-                        <p className="font-bold text-lg">{team.totalStats.defense}</p>
-                      </div>
-                      <div className="text-center p-3 bg-muted/50 rounded">
-                        <p className="text-muted-foreground">PHY</p>
-                        <p className="font-bold text-lg">{team.totalStats.physical}</p>
+                      <div>
+                        <div className="font-medium text-sm">{player.name}</div>
+                        <div className="text-xs text-muted-foreground">{player.club}</div>
                       </div>
                     </div>
-                    
-                    {/* Team Players */}
-                    <div>
-                      <p className="text-sm font-medium mb-3 text-muted-foreground">
-                        Players ({teamPlayers.length})
-                      </p>
-                      <div className="grid grid-cols-1 gap-3">
-                        {teamPlayers.map((player) => (
-                          <div 
-                            key={player.uid}
-                            data-testid={`team-player-${player.uid}`}
-                            className="flex items-center gap-4 p-3 bg-background border rounded-lg"
-                          >
-                            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                              {player.profilePic ? (
-                                <span className="text-lg">{player.profilePic}</span>
-                              ) : (
-                                <i className="fas fa-user text-primary"></i>
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              <p className="font-medium">{player.name}</p>
-                              <p className="text-sm text-muted-foreground">{player.club}</p>
-                            </div>
-                            <div className="text-right">
-                              <Badge variant="secondary" className="text-sm">
-                                {player.overall}
-                              </Badge>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  ))}
+                </div>
+                <div className="text-xs text-muted-foreground mt-2">
+                  Players ({teamPlayers.length})
+                </div>
+              </div>
             );
           })}
         </div>
