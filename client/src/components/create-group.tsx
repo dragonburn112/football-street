@@ -36,10 +36,13 @@ export default function CreateGroup({ user, onGroupCreated, onBack }: CreateGrou
         description: `Group created! Code: ${group.code}`,
       });
       onGroupCreated(group.id);
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Group creation error:", error);
       toast({
         title: "Error",
-        description: "Failed to create group",
+        description: error.code === 'permission-denied' 
+          ? "Database access denied. Please check Firestore rules in Firebase console."
+          : error.message || "Failed to create group",
         variant: "destructive",
       });
     } finally {

@@ -32,9 +32,9 @@ export default function GroupSelector({
     try {
       const userGroups = await getUserGroups(user.uid);
       setGroups(userGroups);
-    } catch (error) {
+      setLoading(false);
+    } catch (error: any) {
       console.error("Failed to load groups:", error);
-    } finally {
       setLoading(false);
     }
   };

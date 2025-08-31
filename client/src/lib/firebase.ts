@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithRedirect, GoogleAuthProvider, signInAnonymously, onAuthStateChanged, User } from "firebase/auth";
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, onSnapshot, query, where, serverTimestamp, Timestamp } from "firebase/firestore";
+import { Group, PlayerCard } from "@shared/schema";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDbLukHyz1FHkFvOK6Lyiq3IN7uP_fm9MM",
@@ -37,36 +38,10 @@ export const signInAsAnonymous = async () => {
   }
 };
 
-export interface Group {
-  id: string;
-  code: string;
-  name: string;
-  createdBy: string;
-  createdAt: Timestamp;
-  members: GroupMember[];
-}
-
 export interface GroupMember {
   uid: string;
   displayName: string;
   joinedAt: Timestamp;
-}
-
-export interface PlayerCard {
-  id: string;
-  groupId: string;
-  createdBy: string;
-  name: string;
-  position: string;
-  pace: number;
-  shooting: number;
-  passing: number;
-  dribbling: number;
-  defense: number;
-  physical: number;
-  overall: number;
-  isFusion: boolean;
-  createdAt: Timestamp;
 }
 
 // Generate a random 6-character group code
