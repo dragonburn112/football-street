@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { User } from "firebase/auth";
-import { Group, PlayerCard, CreatePlayerCard, Match, CreateMatch, UnassignedPlayerCard } from "@shared/schema";
-import { subscribeToGroup, subscribeToGroupPlayerCards, updatePlayerCard, deletePlayerCard, subscribeToGroupMatches, createMatch, isUserAdmin, promoteToAdmin, leaveGroup, subscribeToUnassignedPlayerCards } from "@/lib/firebase";
+import { Group, PlayerCard, CreatePlayerCard, Match, CreateMatch, UnassignedPlayerCard, PlayerFormData } from "@shared/schema";
+import { subscribeToGroup, subscribeToGroupPlayerCards, updatePlayerCard, deletePlayerCard, subscribeToGroupMatches, createMatch, isUserAdmin, promoteToAdmin, leaveGroup, subscribeToUnassignedPlayerCards, createUnassignedPlayerCard, deleteUnassignedPlayerCard } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import CreateMatchForm from "./create-match";
 import MatchDisplay from "./match-display";
 import AdminPanel from "./admin-panel";
 import MatchTab from "./match-tab";
+import PlayerForm from "./player-form";
 import { useToast } from "@/hooks/use-toast";
 
 interface GroupDashboardProps {
@@ -29,6 +30,7 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
   const [showTeamGenerator, setShowTeamGenerator] = useState(false);
   const [showCreateMatch, setShowCreateMatch] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [showCreateUnassigned, setShowCreateUnassigned] = useState(false);
   const [viewingMatch, setViewingMatch] = useState<Match | null>(null);
   const [editingPlayer, setEditingPlayer] = useState<PlayerCard | null>(null);
   
@@ -144,6 +146,42 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
     }
   };
 
+  const handleCreateUnassignedCard = async (playerData: PlayerFormData) => {
+    try {
+      await createUnassignedPlayerCard(groupId, playerData, user);
+      toast({
+        title: "Success",
+        description: "Player card created! It will appear in your card list.",
+      });
+      setShowCreateUnassigned(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create player card",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteUnassignedCard = async (cardId: string) => {
+    const confirmed = confirm("Are you sure you want to delete this unassigned player card?");
+    if (!confirmed) return;
+    
+    try {
+      await deleteUnassignedPlayerCard(groupId, cardId);
+      toast({
+        title: "Success",
+        description: "Player card deleted!",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete player card",
+        variant: "destructive",
+      });
+    }
+  };
+
 
   if (!group) {
     return (
@@ -171,11 +209,53 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
   if (showCreateMatch) {
     return (
       <CreateMatchForm 
-        players={playerCards}
+        players={[...playerCards, ...unassignedCards.map((card, index) => ({
+          ...card,
+          id: `unassigned-${card.id}`,
+          uid: '',
+          createdAt: card.createdAt,
+          updatedAt: card.createdAt,
+        }))]}
         onCreateMatch={handleCreateMatch}
         onCancel={() => setShowCreateMatch(false)}
         isLoading={false}
       />
+    );
+  }
+
+  if (showCreateUnassigned) {
+    return (
+      <div className="min-h-screen bg-background px-4 py-8">
+        <div className="max-w-md mx-auto">
+          <Button 
+            data-testid="button-back-to-group"
+            onClick={() => setShowCreateUnassigned(false)}
+            variant="ghost"
+            className="mb-4 p-0 h-auto text-muted-foreground"
+          >
+            <i className="fas fa-arrow-left mr-2"></i>
+            Back to Group
+          </Button>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <i className="fas fa-plus-circle text-primary"></i>
+                Create Player Card
+              </CardTitle>
+              <CardDescription>
+                Create a new player card for your group. The card will be available for matches and team generation.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PlayerForm 
+                onCreatePlayer={handleCreateUnassignedCard}
+                isLoading={false}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     );
   }
 
@@ -218,7 +298,13 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
             <i className="fas fa-arrow-left mr-2"></i>
             Back to Group
           </Button>
-          <TeamGenerator players={playerCards} />
+          <TeamGenerator players={[...playerCards, ...unassignedCards.map((card, index) => ({
+            ...card,
+            id: `unassigned-${card.id}`,
+            uid: '',
+            createdAt: card.createdAt,
+            updatedAt: card.createdAt,
+          }))]} />
         </div>
       </div>
     );
@@ -276,11 +362,11 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
 
         {/* Action Buttons */}
         <div className="space-y-4 mb-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Button 
               data-testid="button-create-match"
               onClick={() => setShowCreateMatch(true)}
-              disabled={playerCards.length < 4}
+              disabled={playerCards.length + unassignedCards.length < 4}
               className="flex items-center gap-2 py-6 text-base"
             >
               <i className="fas fa-futbol"></i>
@@ -290,13 +376,25 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
             <Button 
               data-testid="button-generate-teams"
               onClick={() => setShowTeamGenerator(true)}
-              disabled={playerCards.length < 2}
+              disabled={playerCards.length + unassignedCards.length < 2}
               variant="outline"
               className="flex items-center gap-2 py-6 text-base"
             >
               <i className="fas fa-random"></i>
               Fair Teams
             </Button>
+            
+            {userIsAdmin && (
+              <Button 
+                data-testid="button-create-cards"
+                onClick={() => setShowCreateUnassigned(true)}
+                variant="outline"
+                className="flex items-center gap-2 py-6 text-base"
+              >
+                <i className="fas fa-plus-circle"></i>
+                Create Cards
+              </Button>
+            )}
             
             {userIsAdmin ? (
               <Button 
@@ -358,18 +456,24 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
         <div>
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <i className="fas fa-cards text-primary"></i>
-            Player Cards ({playerCards.length})
+            Player Cards ({playerCards.length + unassignedCards.length})
           </h2>
           
-          {playerCards.length === 0 ? (
+          {playerCards.length === 0 && unassignedCards.length === 0 ? (
             <Card>
               <CardContent className="text-center py-12">
                 <i className="fas fa-user-plus text-muted-foreground text-4xl mb-4"></i>
-                <p className="text-muted-foreground">Player cards are created automatically when members join the group!</p>
+                <p className="text-muted-foreground">
+                  {userIsAdmin 
+                    ? "Create player cards using the 'Create Cards' button above!"
+                    : "Player cards are created when admins assign them or when you join the group!"
+                  }
+                </p>
               </CardContent>
             </Card>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 sm:gap-4">
+              {/* Assigned Player Cards */}
               {playerCards.map((player) => (
                 <PlayerCardView
                   key={player.id}
@@ -379,6 +483,30 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
                   isOwner={player.uid === user.uid}
                   canEdit={userIsAdmin || player.uid === user.uid}
                 />
+              ))}
+              
+              {/* Unassigned Player Cards */}
+              {unassignedCards.map((card) => (
+                <div key={`unassigned-${card.id}`} className="relative">
+                  <PlayerCardView
+                    player={{
+                      ...card,
+                      uid: '',
+                      createdAt: card.createdAt,
+                      updatedAt: card.createdAt,
+                    }}
+                    onDelete={userIsAdmin ? () => handleDeleteUnassignedCard(card.id) : undefined}
+                    isOwner={false}
+                    canEdit={false}
+                    isUnassigned={true}
+                  />
+                  <Badge 
+                    className="absolute -top-2 -right-2 bg-orange-500 hover:bg-orange-600 text-white text-xs"
+                    data-testid={`badge-unassigned-${card.id}`}
+                  >
+                    Unassigned
+                  </Badge>
+                </div>
               ))}
             </div>
           )}

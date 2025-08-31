@@ -19,13 +19,11 @@ interface AdminPanelProps {
   onGroupDeleted: () => void;
 }
 
-export default function AdminPanel({ user, group, players, matches, unassignedCards: initialUnassignedCards, onClose, onGroupDeleted }: AdminPanelProps) {
+export default function AdminPanel({ user, group, players, matches, unassignedCards, onClose, onGroupDeleted }: AdminPanelProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
   const [showCreatePlayer, setShowCreatePlayer] = useState(false);
-  const [showCreateUnassigned, setShowCreateUnassigned] = useState(false);
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
-  const [unassignedCards, setUnassignedCards] = useState<UnassignedPlayerCard[]>(initialUnassignedCards);
 
   const handlePromoteUser = async (userId: string) => {
     setLoading(`promote-${userId}`);
@@ -145,25 +143,6 @@ export default function AdminPanel({ user, group, players, matches, unassignedCa
     }
   };
 
-  const handleCreateUnassignedCard = async (playerData: PlayerFormData) => {
-    setLoading('create-unassigned');
-    try {
-      await createUnassignedPlayerCard(group.id, playerData, user);
-      toast({
-        title: "Success",
-        description: "Unassigned player card created!",
-      });
-      setShowCreateUnassigned(false);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create unassigned card",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(null);
-    }
-  };
 
   const handleAssignCard = async (cardId: string, memberUid: string) => {
     setLoading(`assign-${cardId}`);
@@ -184,38 +163,9 @@ export default function AdminPanel({ user, group, players, matches, unassignedCa
     }
   };
 
-  const handleDeleteUnassignedCard = async (cardId: string) => {
-    const confirmed = confirm("Are you sure you want to delete this unassigned player card?");
-    if (!confirmed) return;
-    
-    setLoading(`delete-unassigned-${cardId}`);
-    try {
-      await deleteUnassignedPlayerCard(group.id, cardId);
-      toast({
-        title: "Success",
-        description: "Unassigned card deleted!",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete unassigned card",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(null);
-    }
-  };
 
-  useEffect(() => {
-    setUnassignedCards(initialUnassignedCards);
-  }, [initialUnassignedCards]);
 
-  useEffect(() => {
-    const unsubscribe = subscribeToUnassignedPlayerCards(group.id, setUnassignedCards);
-    return unsubscribe;
-  }, [group.id]);
-
-  if (showCreatePlayer || showCreateUnassigned) {
+  if (showCreatePlayer) {
     return (
       <div className="min-h-screen bg-background px-4 py-8">
         <div className="max-w-4xl mx-auto">
@@ -223,7 +173,6 @@ export default function AdminPanel({ user, group, players, matches, unassignedCa
             data-testid="button-back-to-admin"
             onClick={() => {
               setShowCreatePlayer(false);
-              setShowCreateUnassigned(false);
               setSelectedMember(null);
             }}
             variant="ghost"
@@ -232,19 +181,11 @@ export default function AdminPanel({ user, group, players, matches, unassignedCa
             <i className="fas fa-arrow-left mr-2"></i>
             Back to Admin Panel
           </Button>
-          {showCreatePlayer ? (
-            <PlayerForm 
-              onCreatePlayer={handleCreatePlayerCard}
-              isLoading={loading === 'create-player'}
-              selectedMemberName={unassignedMembers.find(m => m.uid === selectedMember)?.displayName}
-            />
-          ) : (
-            <PlayerForm 
-              onCreatePlayer={handleCreateUnassignedCard}
-              isLoading={loading === 'create-unassigned'}
-              selectedMemberName={undefined}
-            />
-          )}
+          <PlayerForm 
+            onCreatePlayer={handleCreatePlayerCard}
+            isLoading={loading === 'create-player'}
+            selectedMemberName={unassignedMembers.find(m => m.uid === selectedMember)?.displayName}
+          />
         </div>
       </div>
     );
@@ -272,9 +213,8 @@ export default function AdminPanel({ user, group, players, matches, unassignedCa
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="players" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="players">Assign Cards</TabsTrigger>
-                <TabsTrigger value="create">Create Cards</TabsTrigger>
                 <TabsTrigger value="members">Member Roles</TabsTrigger>
                 <TabsTrigger value="matches">Match Control</TabsTrigger>
               </TabsList>
@@ -405,84 +345,6 @@ export default function AdminPanel({ user, group, players, matches, unassignedCa
                       </div>
                     </div>
                   )}
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="create" className="mt-6">
-                <div className="space-y-6">
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-medium flex items-center gap-2">
-                        <i className="fas fa-plus-circle text-primary"></i>
-                        Create Unassigned Player Cards
-                      </h3>
-                      <Button
-                        data-testid="button-create-unassigned-card"
-                        onClick={() => setShowCreateUnassigned(true)}
-                        className="flex items-center gap-2"
-                      >
-                        <i className="fas fa-plus"></i>
-                        Create New Card
-                      </Button>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Create player cards that can be assigned to members later when they join the group.
-                    </p>
-                    
-                    {unassignedCards.length === 0 ? (
-                      <div className="text-center py-12">
-                        <i className="fas fa-id-card text-muted-foreground text-4xl mb-4"></i>
-                        <p className="text-muted-foreground mb-4">No unassigned cards yet.</p>
-                        <p className="text-sm text-muted-foreground">Create cards that you can assign to members when they join!</p>
-                      </div>
-                    ) : (
-                      <div className="grid gap-3">
-                        <h4 className="font-medium text-sm text-muted-foreground">
-                          Unassigned Cards ({unassignedCards.length}):
-                        </h4>
-                        {unassignedCards.map((card) => (
-                          <div key={card.id} className="flex items-center justify-between p-4 border rounded-lg bg-card/50">
-                            <div className="flex items-center gap-3">
-                              <div className="text-3xl">{card.profilePic || '⚽'}</div>
-                              <div>
-                                <p className="font-medium text-lg">{card.name}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  {card.club} • Overall: {card.overall}
-                                </p>
-                                <div className="flex gap-4 text-xs text-muted-foreground mt-1">
-                                  <span>PAC: {card.pace}</span>
-                                  <span>SHO: {card.shooting}</span>
-                                  <span>PAS: {card.passing}</span>
-                                  <span>DRI: {card.dribbling}</span>
-                                  <span>DEF: {card.defense}</span>
-                                  <span>PHY: {card.physical}</span>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Badge variant="default" className="text-lg px-3 py-1">
-                                {card.overall}
-                              </Badge>
-                              <Button
-                                data-testid={`button-delete-unassigned-${card.id}`}
-                                onClick={() => handleDeleteUnassignedCard(card.id)}
-                                disabled={loading === `delete-unassigned-${card.id}`}
-                                variant="outline"
-                                size="sm"
-                                className="text-destructive hover:text-destructive"
-                              >
-                                {loading === `delete-unassigned-${card.id}` ? (
-                                  <i className="fas fa-spinner fa-spin"></i>
-                                ) : (
-                                  <i className="fas fa-trash"></i>
-                                )}
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
                 </div>
               </TabsContent>
               

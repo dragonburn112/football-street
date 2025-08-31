@@ -6,9 +6,10 @@ interface PlayerCardProps {
   onDelete?: (id: string) => void;
   isOwner?: boolean;
   canEdit?: boolean;
+  isUnassigned?: boolean;
 }
 
-export default function PlayerCardView({ player, onEdit, onDelete, isOwner, canEdit }: PlayerCardProps) {
+export default function PlayerCardView({ player, onEdit, onDelete, isOwner, canEdit, isUnassigned }: PlayerCardProps) {
 
   const getCardStyle = () => {
     if (player.overall >= 85) {
