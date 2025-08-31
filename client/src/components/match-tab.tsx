@@ -23,12 +23,12 @@ export default function MatchTab({ match, players, group, user, onClose }: Match
   
   // Create player lookup for quick access
   const playerLookup = players.reduce((acc, player) => {
-    acc[player.uid] = player;
+    acc[player.id] = player;
     return acc;
   }, {} as Record<string, PlayerCard>);
 
   const getPlayersByTeam = (teamPlayerIds: string[]) => {
-    return teamPlayerIds.map(uid => playerLookup[uid]).filter(Boolean);
+    return teamPlayerIds.map(id => playerLookup[id]).filter(Boolean);
   };
 
   const handleShuffleTeams = async () => {

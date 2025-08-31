@@ -277,7 +277,12 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
     return (
       <MatchTab 
         match={viewingMatch}
-        players={playerCards}
+        players={[...playerCards, ...unassignedCards.map((card) => ({
+          ...card,
+          uid: '',
+          createdAt: card.createdAt,
+          updatedAt: card.createdAt,
+        }))]}
         group={group}
         user={user}
         onClose={() => setViewingMatch(null)}
@@ -441,7 +446,12 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
                 <MatchDisplay
                   key={match.id}
                   match={match}
-                  players={playerCards}
+                  players={[...playerCards, ...unassignedCards.map((card) => ({
+                    ...card,
+                    uid: '',
+                    createdAt: card.createdAt,
+                    updatedAt: card.createdAt,
+                  }))]}
                   onView={() => setViewingMatch(match)}
                   canEdit={userIsAdmin}
                 />
