@@ -3,11 +3,13 @@ import { getAuth, signInWithRedirect, GoogleAuthProvider, signInAnonymously, onA
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, onSnapshot, query, where, serverTimestamp, Timestamp } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebasestorage.app`,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: "AIzaSyDbLukHyz1FHkFvOK6Lyiq3IN7uP_fm9MM",
+  authDomain: "footballstreet-2c7bb.firebaseapp.com",
+  projectId: "footballstreet-2c7bb",
+  storageBucket: "footballstreet-2c7bb.firebasestorage.app",
+  messagingSenderId: "59591760301",
+  appId: "1:59591760301:web:cce4aa07129481e997e924",
+  measurementId: "G-9WY7BMG6T1"
 };
 
 const app = initializeApp(firebaseConfig);
