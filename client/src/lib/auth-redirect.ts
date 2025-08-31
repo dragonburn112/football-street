@@ -1,30 +1,26 @@
-import { getAuth, getRedirectResult, GoogleAuthProvider } from "firebase/auth";
+import { getRedirectResult, GoogleAuthProvider } from "firebase/auth";
+import { auth } from "./firebase";
 
-const auth = getAuth();
+let redirectHandled = false;
 
-// Call this function on page load when the user is redirected back from Google auth
 export async function handleAuthRedirect() {
+  if (redirectHandled) return null;
+  
   try {
     console.log("Checking for redirect result...");
     const result = await getRedirectResult(auth);
-    if (result) {
-      // User successfully signed in via redirect
-      const credential = GoogleAuthProvider.credentialFromResult(result);
-      const user = result.user;
-      console.log("User signed in via redirect:", user.displayName, user.email);
-      return { user, credential };
+    redirectHandled = true;
+    
+    if (result && result.user) {
+      console.log("User signed in via redirect:", result.user.displayName || result.user.email);
+      return { user: result.user };
     } else {
       console.log("No redirect result found");
+      return null;
     }
-    return null;
   } catch (error: any) {
+    redirectHandled = true;
     console.error("Auth redirect error:", error.code, error.message);
-    // Handle specific Firebase auth errors
-    if (error.code === 'auth/unauthorized-domain') {
-      console.error("Domain not authorized. Add your domain to Firebase Console -> Authentication -> Settings -> Authorized domains");
-    } else if (error.message.includes('Invalid URL')) {
-      console.error("Invalid URL error - check Firebase authorized domains configuration");
-    }
     return { error };
   }
 }

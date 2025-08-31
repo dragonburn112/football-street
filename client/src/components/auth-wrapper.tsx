@@ -15,20 +15,23 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
   const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Handle redirect result first
-    const processAuth = async () => {
-      try {
-        await handleAuthRedirect();
-      } catch (error: any) {
-        console.error("Auth redirect processing error:", error);
-      }
-    };
-    
-    processAuth();
-    
     const unsubscribe = onAuthStateChange((user) => {
+      console.log("Auth state changed:", user?.displayName || user?.email || "No user");
       setUser(user);
       setLoading(false);
+    });
+
+    // Handle redirect result
+    handleAuthRedirect().then((result) => {
+      if (result?.user) {
+        console.log("Redirect auth successful:", result.user.displayName);
+        setUser(result.user);
+        setLoading(false);
+      } else if (result?.error) {
+        console.error("Redirect auth error:", result.error);
+        setAuthError(result.error.message);
+        setLoading(false);
+      }
     });
 
     return unsubscribe;
