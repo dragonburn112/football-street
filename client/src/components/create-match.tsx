@@ -63,16 +63,29 @@ export default function CreateMatch({ players, onCreateMatch, onCancel, isLoadin
   };
 
   const handleSubmit = async (data: CreateMatch) => {
+    console.log("Creating match with data:", { ...data, selectedPlayerIds: selectedPlayers });
+    
+    if (selectedPlayers.length === 0) {
+      toast({
+        title: "Error",
+        description: "No players selected for the match",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       await onCreateMatch({ ...data, selectedPlayerIds: selectedPlayers });
       toast({
         title: "Success",
         description: "Match created successfully!",
       });
+      onCancel(); // Go back to dashboard to see the new match
     } catch (error) {
+      console.error("Match creation error:", error);
       toast({
         title: "Error",
-        description: "Failed to create match",
+        description: error instanceof Error ? error.message : "Failed to create match",
         variant: "destructive",
       });
     }
@@ -284,8 +297,15 @@ export default function CreateMatch({ players, onCreateMatch, onCancel, isLoadin
                     <Button 
                       data-testid="button-create-match"
                       type="submit"
-                      disabled={isLoading}
+                      disabled={isLoading || selectedPlayers.length === 0}
                       className="flex-1 flex items-center gap-2"
+                      onClick={(e) => {
+                        console.log("Create match button clicked", { 
+                          selectedPlayers,
+                          formValues: form.getValues(),
+                          formState: form.formState
+                        });
+                      }}
                     >
                       <i className="fas fa-futbol"></i>
                       {isLoading ? "Creating..." : "Create Match"}
