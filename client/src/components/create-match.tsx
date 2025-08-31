@@ -49,7 +49,6 @@ export default function CreateMatch({ players, onCreateMatch, onCancel, isLoadin
 
   const handleNext = (e?: React.MouseEvent) => {
     e?.preventDefault();
-    console.log("handleNext called, current step:", step);
     
     if (step === 'setup') {
       setStep('players');
@@ -63,7 +62,6 @@ export default function CreateMatch({ players, onCreateMatch, onCancel, isLoadin
         return;
       }
       
-      console.log("Generating teams for confirmation step");
       // Generate teams for preview
       const selectedPlayerCards = players.filter(player => selectedPlayers.includes(player.id));
       const teams = generateBalancedTeams(selectedPlayerCards);
@@ -71,12 +69,10 @@ export default function CreateMatch({ players, onCreateMatch, onCancel, isLoadin
       
       form.setValue('selectedPlayerIds', selectedPlayers);
       setStep('confirm');
-      console.log("Moving to confirm step");
     }
   };
 
   const handleSubmit = async (data: CreateMatch) => {
-    console.log("handleSubmit called - Creating match with data:", { ...data, selectedPlayerIds: selectedPlayers, currentStep: step });
     
     if (selectedPlayers.length === 0) {
       toast({
@@ -138,7 +134,6 @@ export default function CreateMatch({ players, onCreateMatch, onCancel, isLoadin
             <Form {...form}>
               <form onSubmit={(e) => {
                 e.preventDefault();
-                console.log("Form onSubmit prevented, current step:", step);
                 return false;
               }} className="space-y-6">
                 
