@@ -137,25 +137,36 @@ export async function getUserGroups(userId: string): Promise<Group[]> {
 
 // Automatically create a player card when user joins group
 export async function createAutoPlayerCard(groupId: string, user: User): Promise<PlayerCard> {
-  const cardData: Omit<PlayerCard, 'id'> = {
-    uid: user.uid,
-    name: user.displayName || 'Player',
-    club: 'Street FC', // Default club
-    profilePic: '⚽',
-    pace: 75,
-    shooting: 75,
-    passing: 75,
-    dribbling: 75,
-    defense: 75,
-    physical: 75,
-    overall: 75, // Default rating
-    createdAt: serverTimestamp() as Timestamp,
-    updatedAt: serverTimestamp() as Timestamp,
-  };
+  try {
+    // Check if player card already exists
+    const existingCard = await getDoc(doc(db, 'groups', groupId, 'players', user.uid));
+    if (existingCard.exists()) {
+      return { id: user.uid, ...existingCard.data() } as PlayerCard;
+    }
 
-  // Use user's UID as the document ID
-  await setDoc(doc(db, 'groups', groupId, 'players', user.uid), cardData);
-  return { ...cardData, id: user.uid };
+    const cardData: Omit<PlayerCard, 'id'> = {
+      uid: user.uid,
+      name: user.displayName || 'Player',
+      club: 'Street FC', // Default club
+      profilePic: '⚽',
+      pace: 75,
+      shooting: 75,
+      passing: 75,
+      dribbling: 75,
+      defense: 75,
+      physical: 75,
+      overall: 75, // Default rating
+      createdAt: serverTimestamp() as Timestamp,
+      updatedAt: serverTimestamp() as Timestamp,
+    };
+
+    // Use user's UID as the document ID
+    await setDoc(doc(db, 'groups', groupId, 'players', user.uid), cardData);
+    return { ...cardData, id: user.uid };
+  } catch (error) {
+    console.error('Error creating auto player card:', error);
+    throw error;
+  }
 }
 
 // Get all player cards for a group
@@ -179,6 +190,9 @@ export function subscribeToGroup(groupId: string, callback: (group: Group | null
     } else {
       callback(null);
     }
+  }, (error) => {
+    console.error('Error in group subscription:', error);
+    callback(null);
   });
 }
 
@@ -191,6 +205,9 @@ export function subscribeToGroupPlayerCards(groupId: string, callback: (cards: P
       cards.push({ id: doc.id, ...doc.data() } as PlayerCard);
     });
     callback(cards);
+  }, (error) => {
+    console.error('Error in player cards subscription:', error);
+    callback([]); // Return empty array on error
   });
 }
 

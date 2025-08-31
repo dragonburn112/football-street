@@ -1,0 +1,26 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Groups collection - users can read groups they're members of
+    match /groups/{groupId} {
+      allow read, write: if request.auth != null && 
+        (resource == null || 
+         request.auth.uid in resource.data.members.map(['uid']));
+      
+      // Player cards subcollection - members can access player cards in their groups
+      match /players/{playerId} {
+        allow read, write: if request.auth != null && 
+          exists(/databases/$(database)/documents/groups/$(groupId)) &&
+          request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members.map(['uid']);
+      }
+      
+      // Matches subcollection - members can access matches in their groups
+      match /matches/{matchId} {
+        allow read, write: if request.auth != null && 
+          exists(/databases/$(database)/documents/groups/$(groupId)) &&
+          request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members.map(['uid']);
+      }
+    }
+  }
+}
