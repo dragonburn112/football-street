@@ -3,7 +3,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { createPlayerCardSchema, type CreatePlayerCard } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 
@@ -12,25 +11,12 @@ interface PlayerFormProps {
   isLoading: boolean;
 }
 
-const positions = [
-  { value: "GK", label: "GK - Goalkeeper" },
-  { value: "CB", label: "CB - Center Back" },
-  { value: "LB", label: "LB - Left Back" },
-  { value: "RB", label: "RB - Right Back" },
-  { value: "CDM", label: "CDM - Defensive Midfielder" },
-  { value: "CM", label: "CM - Central Midfielder" },
-  { value: "CAM", label: "CAM - Attacking Midfielder" },
-  { value: "LW", label: "LW - Left Winger" },
-  { value: "RW", label: "RW - Right Winger" },
-  { value: "ST", label: "ST - Striker" },
-];
 
 export default function PlayerForm({ onCreatePlayer, isLoading }: PlayerFormProps) {
   const form = useForm<CreatePlayerCard>({
     resolver: zodResolver(createPlayerCardSchema),
     defaultValues: {
       name: "",
-      position: "",
       pace: 50,
       shooting: 50,
       passing: 50,
@@ -38,7 +24,6 @@ export default function PlayerForm({ onCreatePlayer, isLoading }: PlayerFormProp
       defense: 50,
       physical: 50,
       overall: 50,
-      isFusion: false,
     },
   });
 
@@ -87,34 +72,6 @@ export default function PlayerForm({ onCreatePlayer, isLoading }: PlayerFormProp
                 )}
               />
               
-              <FormField
-                control={form.control}
-                name="position"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Position</FormLabel>
-                    <Select 
-                      data-testid="select-position"
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select position" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {positions.map((position) => (
-                          <SelectItem key={position.value} value={position.value}>
-                            {position.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
             
             <div className="space-y-4">

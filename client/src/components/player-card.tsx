@@ -4,25 +4,13 @@ import { useToast } from "@/hooks/use-toast";
 
 interface PlayerCardProps {
   player: PlayerCard;
-  isSelected: boolean;
-  fusionMode: boolean;
-  onSelect: (id: string) => void;
-  onDelete: (id: string) => void;
 }
 
-export default function PlayerCardView({ 
-  player, 
-  isSelected, 
-  fusionMode, 
-  onSelect, 
-  onDelete 
-}: PlayerCardProps) {
+export default function PlayerCardView({ player }: PlayerCardProps) {
   const { toast } = useToast();
 
   const getCardStyle = () => {
-    if (player.isFusion) {
-      return "fusion-card";
-    } else if (player.overall >= 85) {
+    if (player.overall >= 85) {
       return "fifa-card";
     } else if (player.overall >= 70) {
       return "fifa-card-silver";
@@ -48,40 +36,15 @@ export default function PlayerCardView({
     }
   };
 
-  const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onDelete(player.id);
-  };
 
   return (
     <div 
       data-testid={`card-player-${player.id}`}
-      className={`${getCardStyle()} rounded-lg p-4 relative transform transition-all duration-300 hover:scale-105 cursor-pointer ${
-        fusionMode ? 'ring-2 ring-purple-400/50' : ''
-      } ${
-        isSelected ? 'ring-green-400' : ''
-      }`}
-      onClick={() => onSelect(player.id)}
+      className={`${getCardStyle()} rounded-lg p-4 relative transform transition-all duration-300 hover:scale-105`}
     >
-      {/* Selection Indicator */}
-      <div 
-        className={`absolute top-2 right-2 transition-opacity ${
-          isSelected ? 'opacity-100' : 'opacity-0'
-        }`}
-      >
-        <i className="fas fa-check-circle text-green-400 text-xl"></i>
-      </div>
 
-      {/* Fusion Badge */}
-      {player.isFusion && (
-        <div className="absolute top-2 left-2">
-          <span className="bg-white/20 text-white text-xs px-2 py-1 rounded-full font-bold">
-            FUSION
-          </span>
-        </div>
-      )}
       
-      {/* Overall Rating and Position */}
+      {/* Overall Rating */}
       <div className="text-center mb-3">
         <div 
           data-testid={`text-overall-${player.id}`}
@@ -89,18 +52,12 @@ export default function PlayerCardView({
         >
           {player.overall}
         </div>
-        <div 
-          data-testid={`text-position-${player.id}`}
-          className="text-sm font-bold text-white/90"
-        >
-          {player.position}
-        </div>
       </div>
       
       {/* Player Info */}
       <div className="bg-white/10 rounded-lg p-3 mb-3">
         <div className="w-16 h-20 bg-white/20 rounded mx-auto mb-2 flex items-center justify-center">
-          <i className={`fas ${player.isFusion ? 'fa-magic' : 'fa-user'} text-white/60 text-2xl`}></i>
+          <i className="fas fa-user text-white/60 text-2xl"></i>
         </div>
         <div className="text-center">
           <div 
@@ -141,7 +98,7 @@ export default function PlayerCardView({
       </div>
       
       {/* Action Buttons */}
-      <div className="absolute bottom-2 right-2 flex gap-2">
+      <div className="absolute bottom-2 right-2">
         <button 
           data-testid={`button-export-${player.id}`}
           onClick={handleExport}
@@ -149,14 +106,6 @@ export default function PlayerCardView({
           title="Export as PNG"
         >
           <i className="fas fa-download text-sm"></i>
-        </button>
-        <button 
-          data-testid={`button-delete-${player.id}`}
-          onClick={handleDelete}
-          className="text-white/70 hover:text-red-400 transition-colors"
-          title="Delete card"
-        >
-          <i className="fas fa-trash text-sm"></i>
         </button>
       </div>
     </div>

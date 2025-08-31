@@ -6,7 +6,6 @@ export const playerCardSchema = z.object({
   groupId: z.string(),
   createdBy: z.string(),
   name: z.string().min(1, "Player name is required"),
-  position: z.string().min(1, "Position is required"),
   pace: z.number().min(1).max(99),
   shooting: z.number().min(1).max(99),
   passing: z.number().min(1).max(99),
@@ -14,7 +13,6 @@ export const playerCardSchema = z.object({
   defense: z.number().min(1).max(99),
   physical: z.number().min(1).max(99),
   overall: z.number().min(1).max(99),
-  isFusion: z.boolean(),
   createdAt: z.any(), // Firebase Timestamp
 });
 

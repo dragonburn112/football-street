@@ -23,8 +23,6 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
   const [playerCards, setPlayerCards] = useState<PlayerCard[]>([]);
   const [showCreatePlayer, setShowCreatePlayer] = useState(false);
   const [showTeamGenerator, setShowTeamGenerator] = useState(false);
-  const [selectedCards, setSelectedCards] = useState<string[]>([]);
-  const [fusionMode, setFusionMode] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -54,61 +52,6 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
     }
   };
 
-  const handleCardSelect = (id: string) => {
-    if (!fusionMode) return;
-
-    if (selectedCards.includes(id)) {
-      setSelectedCards(selectedCards.filter(cardId => cardId !== id));
-    } else if (selectedCards.length < 5) {
-      setSelectedCards([...selectedCards, id]);
-    }
-  };
-
-  const handleCreateFusion = async () => {
-    if (selectedCards.length < 2) return;
-
-    const selectedPlayers = playerCards.filter(card => selectedCards.includes(card.id));
-    
-    // Calculate average stats
-    const totalStats = selectedPlayers.reduce(
-      (acc, player) => ({
-        pace: acc.pace + player.pace,
-        shooting: acc.shooting + player.shooting,
-        passing: acc.passing + player.passing,
-        dribbling: acc.dribbling + player.dribbling,
-        defense: acc.defense + player.defense,
-        physical: acc.physical + player.physical,
-      }),
-      { pace: 0, shooting: 0, passing: 0, dribbling: 0, defense: 0, physical: 0 }
-    );
-
-    const count = selectedPlayers.length;
-    const averageStats = {
-      pace: Math.round(totalStats.pace / count),
-      shooting: Math.round(totalStats.shooting / count),
-      passing: Math.round(totalStats.passing / count),
-      dribbling: Math.round(totalStats.dribbling / count),
-      defense: Math.round(totalStats.defense / count),
-      physical: Math.round(totalStats.physical / count),
-    };
-
-    const overall = Math.round(
-      (averageStats.pace + averageStats.shooting + averageStats.passing + 
-       averageStats.dribbling + averageStats.defense + averageStats.physical) / 6
-    );
-
-    const fusionPlayer: CreatePlayerCard = {
-      name: `Fusion ${selectedPlayers.map(p => p.name.split(' ')[0]).join('-')}`,
-      position: "HYBRID",
-      ...averageStats,
-      overall,
-      isFusion: true,
-    };
-
-    await handleCreatePlayer(fusionPlayer);
-    setSelectedCards([]);
-    setFusionMode(false);
-  };
 
   if (!group) {
     return (
@@ -213,7 +156,7 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
         </Card>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           <Button 
             data-testid="button-create-player"
             onClick={() => setShowCreatePlayer(true)}
@@ -221,19 +164,6 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
           >
             <i className="fas fa-plus"></i>
             Create Player
-          </Button>
-          
-          <Button 
-            data-testid="button-toggle-fusion"
-            onClick={() => {
-              setFusionMode(!fusionMode);
-              setSelectedCards([]);
-            }}
-            variant={fusionMode ? "destructive" : "secondary"}
-            className="flex items-center gap-2 py-6 text-base"
-          >
-            <i className="fas fa-magic"></i>
-            {fusionMode ? 'Cancel Fusion' : 'Fusion Mode'}
           </Button>
           
           <Button 
@@ -248,46 +178,6 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
           </Button>
         </div>
 
-        {/* Fusion Controls */}
-        {fusionMode && (
-          <Card className="mb-6 border-purple-500/50">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <i className="fas fa-magic text-purple-400"></i>
-                Fusion Mode
-              </CardTitle>
-              <CardDescription>
-                Select 2-5 cards to create a fusion card
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  Selected: <span data-testid="selected-count">{selectedCards.length}</span>/5
-                </span>
-                <div className="flex gap-2">
-                  <Button 
-                    data-testid="button-clear-selection"
-                    onClick={() => setSelectedCards([])}
-                    variant="ghost"
-                    size="sm"
-                  >
-                    Clear
-                  </Button>
-                  <Button 
-                    data-testid="button-create-fusion"
-                    onClick={handleCreateFusion}
-                    disabled={selectedCards.length < 2}
-                    className="bg-purple-600 hover:bg-purple-700"
-                    size="sm"
-                  >
-                    Create Fusion
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Player Cards */}
         <div>
@@ -309,10 +199,6 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
                 <PlayerCardView
                   key={player.id}
                   player={player}
-                  isSelected={selectedCards.includes(player.id)}
-                  fusionMode={fusionMode}
-                  onSelect={handleCardSelect}
-                  onDelete={() => {}} // Firebase cards don't have delete functionality for now
                 />
               ))}
             </div>
