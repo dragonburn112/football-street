@@ -57,6 +57,7 @@ export function generateGroupCode(): string {
 // Create a new group
 export async function createGroup(groupName: string, user: User): Promise<Group> {
   const code = generateGroupCode();
+  const now = new Date();
   const groupData: Omit<Group, 'id'> = {
     code,
     name: groupName,
@@ -65,7 +66,7 @@ export async function createGroup(groupName: string, user: User): Promise<Group>
     members: [{
       uid: user.uid,
       displayName: user.displayName || 'Anonymous',
-      joinedAt: serverTimestamp() as Timestamp,
+      joinedAt: now as any, // Use regular Date instead of serverTimestamp inside array
     }],
   };
 
@@ -92,7 +93,7 @@ export async function joinGroup(code: string, user: User): Promise<Group | null>
     const newMember: GroupMember = {
       uid: user.uid,
       displayName: user.displayName || 'Anonymous',
-      joinedAt: serverTimestamp() as Timestamp,
+      joinedAt: new Date() as any, // Use regular Date instead of serverTimestamp inside array
     };
     
     const updatedMembers = [...group.members, newMember];
