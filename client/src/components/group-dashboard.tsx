@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { User } from "firebase/auth";
-import { Group, PlayerCard, CreatePlayerCard } from "@shared/schema";
-import { subscribeToGroup, subscribeToGroupPlayerCards, createPlayerCard, updatePlayerCard, deletePlayerCard } from "@/lib/firebase";
+import { Group, PlayerCard, CreatePlayerCard, Match, CreateMatch } from "@shared/schema";
+import { subscribeToGroup, subscribeToGroupPlayerCards, createPlayerCard, updatePlayerCard, deletePlayerCard, subscribeToGroupMatches, createMatch } from "@/lib/firebase";
 import { generateBalancedTeams } from "@/lib/team-balancer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import PlayerForm from "./player-form";
 import PlayerCardView from "./player-card";
 import TeamGenerator from "./team-generator";
 import EditPlayerForm from "./edit-player-form";
+import CreateMatchForm from "./create-match";
+import MatchDisplay from "./match-display";
 import { useToast } from "@/hooks/use-toast";
 
 interface GroupDashboardProps {
@@ -22,18 +24,22 @@ interface GroupDashboardProps {
 export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDashboardProps) {
   const [group, setGroup] = useState<Group | null>(null);
   const [playerCards, setPlayerCards] = useState<PlayerCard[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
   const [showCreatePlayer, setShowCreatePlayer] = useState(false);
   const [showTeamGenerator, setShowTeamGenerator] = useState(false);
+  const [showCreateMatch, setShowCreateMatch] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<PlayerCard | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     const unsubscribeGroup = subscribeToGroup(groupId, setGroup);
     const unsubscribeCards = subscribeToGroupPlayerCards(groupId, setPlayerCards);
+    const unsubscribeMatches = subscribeToGroupMatches(groupId, setMatches);
 
     return () => {
       unsubscribeGroup();
       unsubscribeCards();
+      unsubscribeMatches();
     };
   }, [groupId]);
 
@@ -96,6 +102,23 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
     }
   };
 
+  const handleCreateMatch = async (matchData: CreateMatch) => {
+    try {
+      await createMatch(groupId, matchData, playerCards, user);
+      setShowCreateMatch(false);
+      toast({
+        title: "Success",
+        description: "Match created with balanced teams!",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create match",
+        variant: "destructive",
+      });
+    }
+  };
+
 
   if (!group) {
     return (
@@ -136,6 +159,17 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
         player={editingPlayer}
         onUpdatePlayer={handleUpdatePlayer}
         onCancel={() => setEditingPlayer(null)}
+        isLoading={false}
+      />
+    );
+  }
+
+  if (showCreateMatch) {
+    return (
+      <CreateMatchForm 
+        players={playerCards}
+        onCreateMatch={handleCreateMatch}
+        onCancel={() => setShowCreateMatch(false)}
         isLoading={false}
       />
     );
@@ -211,7 +245,7 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
         </Card>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <Button 
             data-testid="button-create-player"
             onClick={() => setShowCreatePlayer(true)}
@@ -219,6 +253,17 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
           >
             <i className="fas fa-plus"></i>
             Create Player
+          </Button>
+          
+          <Button 
+            data-testid="button-create-match"
+            onClick={() => setShowCreateMatch(true)}
+            disabled={playerCards.length < 4}
+            variant="outline"
+            className="flex items-center gap-2 py-6 text-base"
+          >
+            <i className="fas fa-futbol"></i>
+            Create Match
           </Button>
           
           <Button 
@@ -233,6 +278,36 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
           </Button>
         </div>
 
+
+        {/* Matches Section */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <i className="fas fa-futbol text-primary"></i>
+            Matches ({matches.length})
+          </h2>
+          
+          {matches.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-8">
+                <i className="fas fa-futbol text-muted-foreground text-3xl mb-3"></i>
+                <p className="text-muted-foreground">No matches yet. Create your first match!</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {matches.map((match) => (
+                <MatchDisplay
+                  key={match.id}
+                  match={match}
+                  players={playerCards}
+                  canEdit={match.createdBy === user.uid}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        <Separator className="my-8" />
 
         {/* Player Cards */}
         <div>

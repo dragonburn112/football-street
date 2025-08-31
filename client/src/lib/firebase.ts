@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithRedirect, GoogleAuthProvider, signInAnonymously, onAuthStateChanged, User } from "firebase/auth";
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, onSnapshot, query, where, serverTimestamp, Timestamp, deleteDoc, updateDoc } from "firebase/firestore";
-import { Group, PlayerCard } from "@shared/schema";
+import { Group, PlayerCard, Match, CreateMatch } from "@shared/schema";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDbLukHyz1FHkFvOK6Lyiq3IN7uP_fm9MM",
@@ -182,6 +182,117 @@ export async function updatePlayerCard(cardId: string, updates: Partial<Omit<Pla
 // Delete a player card
 export async function deletePlayerCard(cardId: string): Promise<void> {
   await deleteDoc(doc(db, 'playerCards', cardId));
+}
+
+// Generate balanced teams based on player stats
+function generateBalancedTeams(players: PlayerCard[], numberOfTeams: number): { name: string; players: string[]; totalStats: any }[] {
+  // Sort players by overall rating in descending order
+  const sortedPlayers = [...players].sort((a, b) => b.overall - a.overall);
+  
+  // Initialize teams
+  const teams: { name: string; players: string[]; totalStats: any }[] = [];
+  for (let i = 0; i < numberOfTeams; i++) {
+    teams.push({
+      name: `Team ${String.fromCharCode(65 + i)}`, // Team A, Team B, etc.
+      players: [],
+      totalStats: {
+        pace: 0,
+        shooting: 0,
+        passing: 0,
+        dribbling: 0,
+        defense: 0,
+        physical: 0,
+        overall: 0,
+      }
+    });
+  }
+  
+  // Distribute players using snake draft (1-2-3-3-2-1 pattern for 3 teams)
+  sortedPlayers.forEach((player, index) => {
+    const teamIndex = index % numberOfTeams;
+    teams[teamIndex].players.push(player.id);
+    
+    // Add to team stats
+    teams[teamIndex].totalStats.pace += player.pace;
+    teams[teamIndex].totalStats.shooting += player.shooting;
+    teams[teamIndex].totalStats.passing += player.passing;
+    teams[teamIndex].totalStats.dribbling += player.dribbling;
+    teams[teamIndex].totalStats.defense += player.defense;
+    teams[teamIndex].totalStats.physical += player.physical;
+    teams[teamIndex].totalStats.overall += player.overall;
+  });
+  
+  // Calculate average stats for each team
+  teams.forEach(team => {
+    const playerCount = team.players.length;
+    if (playerCount > 0) {
+      team.totalStats.pace = Math.round(team.totalStats.pace / playerCount);
+      team.totalStats.shooting = Math.round(team.totalStats.shooting / playerCount);
+      team.totalStats.passing = Math.round(team.totalStats.passing / playerCount);
+      team.totalStats.dribbling = Math.round(team.totalStats.dribbling / playerCount);
+      team.totalStats.defense = Math.round(team.totalStats.defense / playerCount);
+      team.totalStats.physical = Math.round(team.totalStats.physical / playerCount);
+      team.totalStats.overall = Math.round(team.totalStats.overall / playerCount);
+    }
+  });
+  
+  return teams;
+}
+
+// Create a new match with team generation
+export async function createMatch(groupId: string, matchData: CreateMatch, allPlayers: PlayerCard[], user: User): Promise<Match> {
+  // Get selected players
+  const selectedPlayers = allPlayers.filter(player => matchData.selectedPlayerIds.includes(player.id));
+  
+  // Generate balanced teams
+  const teams = generateBalancedTeams(selectedPlayers, matchData.numberOfTeams);
+  
+  const fullMatchData: Omit<Match, 'id'> = {
+    ...matchData,
+    groupId,
+    createdBy: user.uid,
+    teams,
+    status: "draft",
+    createdAt: serverTimestamp() as Timestamp,
+  };
+
+  const docRef = await addDoc(collection(db, 'matches'), fullMatchData);
+  return { ...fullMatchData, id: docRef.id };
+}
+
+// Get all matches for a group
+export async function getGroupMatches(groupId: string): Promise<Match[]> {
+  const matchesQuery = query(collection(db, 'matches'), where('groupId', '==', groupId));
+  const querySnapshot = await getDocs(matchesQuery);
+  
+  const matches: Match[] = [];
+  querySnapshot.forEach(doc => {
+    matches.push({ id: doc.id, ...doc.data() } as Match);
+  });
+  
+  return matches;
+}
+
+// Subscribe to real-time match updates
+export function subscribeToGroupMatches(groupId: string, callback: (matches: Match[]) => void) {
+  const matchesQuery = query(collection(db, 'matches'), where('groupId', '==', groupId));
+  return onSnapshot(matchesQuery, (snapshot) => {
+    const matches: Match[] = [];
+    snapshot.forEach(doc => {
+      matches.push({ id: doc.id, ...doc.data() } as Match);
+    });
+    callback(matches);
+  });
+}
+
+// Update a match
+export async function updateMatch(matchId: string, updates: Partial<Omit<Match, 'id' | 'groupId' | 'createdBy' | 'createdAt'>>): Promise<void> {
+  await updateDoc(doc(db, 'matches', matchId), updates);
+}
+
+// Delete a match
+export async function deleteMatch(matchId: string): Promise<void> {
+  await deleteDoc(doc(db, 'matches', matchId));
 }
 
 // Auth state listener
