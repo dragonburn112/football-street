@@ -7,12 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 
 interface PlayerFormProps {
-  onCreatePlayer: (player: CreatePlayerCard) => void;
+  onCreatePlayer: (player: CreatePlayerCard) => Promise<void>;
   isLoading: boolean;
+  selectedMemberName?: string;
 }
 
 
-export default function PlayerForm({ onCreatePlayer, isLoading }: PlayerFormProps) {
+export default function PlayerForm({ onCreatePlayer, isLoading, selectedMemberName }: PlayerFormProps) {
   const form = useForm<CreatePlayerCard>({
     resolver: zodResolver(createPlayerCardSchema),
     defaultValues: {
@@ -46,10 +47,18 @@ export default function PlayerForm({ onCreatePlayer, isLoading }: PlayerFormProp
 
   return (
     <div className="bg-card rounded-lg border border-border p-6 mb-8">
-      <h2 className="text-xl font-semibold text-card-foreground mb-4 flex items-center gap-2">
-        <i className="fas fa-user-plus text-primary"></i>
-        Create New Player
-      </h2>
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold text-card-foreground mb-2 flex items-center gap-2">
+          <i className="fas fa-user-plus text-primary"></i>
+          Create New Player Card
+        </h2>
+        {selectedMemberName && (
+          <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg border">
+            <i className="fas fa-user text-primary"></i>
+            <span className="text-sm">Creating card for: <strong>{selectedMemberName}</strong></span>
+          </div>
+        )}
+      </div>
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">

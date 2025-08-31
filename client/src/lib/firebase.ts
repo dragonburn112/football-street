@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithRedirect, GoogleAuthProvider, signInAnonymously, onAuthStateChanged, User } from "firebase/auth";
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, onSnapshot, query, where, serverTimestamp, Timestamp, deleteDoc, updateDoc } from "firebase/firestore";
-import { Group, PlayerCard, Match, CreateMatch } from "@shared/schema";
+import { Group, PlayerCard, Match, CreateMatch, CreatePlayerCard } from "@shared/schema";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDbLukHyz1FHkFvOK6Lyiq3IN7uP_fm9MM",
@@ -74,8 +74,7 @@ export async function createGroup(groupName: string, user: User): Promise<Group>
   const docRef = await addDoc(collection(db, 'groups'), groupData);
   const group = { ...groupData, id: docRef.id };
   
-  // Automatically create player card for group creator
-  await createAutoPlayerCard(docRef.id, user);
+  // Remove automatic player card creation
   
   return group;
 }
@@ -109,8 +108,7 @@ export async function joinGroup(code: string, user: User): Promise<Group | null>
       members: updatedMembers 
     });
     
-    // Automatically create player card for new member
-    await createAutoPlayerCard(group.id, user);
+    // Remove automatic player card creation
     
     return { ...group, members: updatedMembers };
   }
@@ -135,7 +133,32 @@ export async function getUserGroups(userId: string): Promise<Group[]> {
   return userGroups;
 }
 
-// Automatically create a player card when user joins group
+// Create a player card for a specific member (admin function)
+export async function createPlayerCardForMember(groupId: string, memberUid: string, playerData: CreatePlayerCard, createdBy: User): Promise<PlayerCard> {
+  try {
+    // Check if player card already exists
+    const existingCard = await getDoc(doc(db, 'groups', groupId, 'players', memberUid));
+    if (existingCard.exists()) {
+      throw new Error('Player card already exists for this member');
+    }
+
+    const cardData: Omit<PlayerCard, 'id'> = {
+      ...playerData,
+      uid: memberUid,
+      createdAt: serverTimestamp() as Timestamp,
+      updatedAt: serverTimestamp() as Timestamp,
+    };
+
+    // Use member's UID as the document ID
+    await setDoc(doc(db, 'groups', groupId, 'players', memberUid), cardData);
+    return { ...cardData, id: memberUid };
+  } catch (error) {
+    console.error('Error creating player card for member:', error);
+    throw error;
+  }
+}
+
+// Automatically create a player card when user joins group (deprecated - kept for backward compatibility)
 export async function createAutoPlayerCard(groupId: string, user: User): Promise<PlayerCard> {
   try {
     // Check if player card already exists
