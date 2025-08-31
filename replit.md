@@ -1,8 +1,8 @@
-# FIFA Card Creator & Team Manager
+# Street Football Cards - Group-Based Mobile App
 
 ## Overview
 
-This is a full-stack web application that allows users to create FIFA-style player cards with customizable stats, fuse multiple cards together to create special fusion cards, and generate balanced teams from their collection. The app features a modern dark theme interface with interactive card management, PNG export functionality, and team balancing algorithms.
+This is a mobile-first React application that allows users to create FIFA-style player cards, join groups with friends, and generate balanced teams. The app features Firebase authentication, real-time group management, fusion card creation, and PNG export functionality. Designed specifically for mobile phone usage with touch-friendly interfaces.
 
 ## User Preferences
 
@@ -19,17 +19,18 @@ Preferred communication style: Simple, everyday language.
 - **Form Handling**: React Hook Form with Zod validation
 
 ### Backend Architecture
-- **Runtime**: Node.js with Express.js framework
-- **API Design**: RESTful API endpoints for CRUD operations on player data
-- **Data Storage**: Currently using in-memory storage with MemStorage class, designed to be easily replaceable with database storage
-- **Validation**: Zod schemas for request/response validation
-- **Development**: Hot reloading with Vite integration in development mode
+- **Runtime**: Node.js with Express.js framework (minimal API for health checks)
+- **Data Storage**: Firebase Firestore for real-time group and player card storage
+- **Authentication**: Firebase Authentication with Google sign-in and anonymous auth
+- **Real-time**: Firebase listeners for instant group updates and member notifications
 
-### Database Schema (PostgreSQL Ready)
-- **ORM**: Drizzle ORM configured for PostgreSQL
-- **Schema**: Single `players` table with fields for player attributes (name, position, stats like pace, shooting, passing, etc.)
-- **Migrations**: Drizzle Kit for database migrations and schema management
-- **Connection**: Configured for Neon Database serverless PostgreSQL
+### Firebase Integration
+- **Firestore Collections**: 
+  - `groups` - Group information, codes, and member lists
+  - `playerCards` - Player cards associated with groups
+- **Authentication**: Google OAuth and anonymous sign-in options
+- **Real-time Listeners**: Automatic updates when group members join or create cards
+- **Security**: Firebase rules enforce group-based access control
 
 ### Key Features Implementation
 - **Card Creation**: Form-based player card creation with stat sliders and position selection

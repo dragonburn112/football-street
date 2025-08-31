@@ -1,6 +1,6 @@
-import { Player } from "@shared/schema";
+import { PlayerCard } from "@shared/schema";
 
-export async function exportCardAsPNG(player: Player): Promise<void> {
+export async function exportCardAsPNG(player: PlayerCard): Promise<void> {
   return new Promise((resolve, reject) => {
     try {
       const canvas = document.createElement('canvas');

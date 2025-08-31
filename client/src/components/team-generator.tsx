@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { Player } from "@shared/schema";
+import { PlayerCard } from "@shared/schema";
 import { generateBalancedTeams } from "@/lib/team-balancer";
 import { Button } from "@/components/ui/button";
 
 interface TeamGeneratorProps {
-  players: Player[];
+  players: PlayerCard[];
 }
 
 interface Team {
-  players: Player[];
+  players: PlayerCard[];
   averageRating: number;
 }
 

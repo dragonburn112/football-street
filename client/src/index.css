@@ -82,38 +82,68 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
+
+  /* Mobile-first optimizations */
+  html {
+    @apply scroll-smooth;
+  }
+
+  /* Touch-friendly button sizes for mobile */
+  button {
+    @apply min-h-[44px];
+  }
+
+  /* Improved touch targets for mobile */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
 }
 
 .fifa-card {
   background: linear-gradient(135deg, #FFD700 0%, #FFA500 30%, #FF8C00 100%);
   box-shadow: 
-    0 0 20px rgba(255, 215, 0, 0.3),
+    0 4px 15px rgba(255, 215, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
     inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  min-height: 280px;
+  @apply aspect-[2/3];
 }
 
 .fifa-card-silver {
   background: linear-gradient(135deg, #C0C0C0 0%, #A8A8A8 30%, #909090 100%);
   box-shadow: 
-    0 0 20px rgba(192, 192, 192, 0.3),
+    0 4px 15px rgba(192, 192, 192, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
     inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  min-height: 280px;
+  @apply aspect-[2/3];
 }
 
 .fifa-card-bronze {
   background: linear-gradient(135deg, #CD7F32 0%, #B8661F 30%, #A0540D 100%);
   box-shadow: 
-    0 0 20px rgba(205, 127, 50, 0.3),
+    0 4px 15px rgba(205, 127, 50, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
     inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  min-height: 280px;
+  @apply aspect-[2/3];
 }
 
 .fusion-card {
   background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 30%, #6D28D9 100%);
   box-shadow: 
-    0 0 20px rgba(139, 92, 246, 0.4),
+    0 4px 15px rgba(139, 92, 246, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
     inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  min-height: 280px;
+  @apply aspect-[2/3];
+}
+
+/* Mobile-optimized card grid */
+@media (max-width: 640px) {
+  .fifa-card, .fifa-card-silver, .fifa-card-bronze, .fusion-card {
+    min-height: 240px;
+  }
 }
 
 .stat-bar {

@@ -1,16 +1,16 @@
-import { Player } from "@shared/schema";
+import { PlayerCard } from "@shared/schema";
 
 interface Team {
-  players: Player[];
+  players: PlayerCard[];
   averageRating: number;
 }
 
-export function generateBalancedTeams(players: Player[]): { teamA: Team; teamB: Team } {
+export function generateBalancedTeams(players: PlayerCard[]): { teamA: Team; teamB: Team } {
   // Sort players by overall rating in descending order
   const sortedPlayers = [...players].sort((a, b) => b.overall - a.overall);
   
-  const teamA: Player[] = [];
-  const teamB: Player[] = [];
+  const teamA: PlayerCard[] = [];
+  const teamB: PlayerCard[] = [];
   
   // Greedy algorithm: assign each player to the team with lower current average
   for (const player of sortedPlayers) {

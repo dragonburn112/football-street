@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertPlayerSchema, type InsertPlayer } from "@shared/schema";
+import { createPlayerCardSchema, type CreatePlayerCard } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 
 interface PlayerFormProps {
-  onCreatePlayer: (player: InsertPlayer) => void;
+  onCreatePlayer: (player: CreatePlayerCard) => void;
   isLoading: boolean;
 }
 
@@ -26,8 +26,8 @@ const positions = [
 ];
 
 export default function PlayerForm({ onCreatePlayer, isLoading }: PlayerFormProps) {
-  const form = useForm<InsertPlayer>({
-    resolver: zodResolver(insertPlayerSchema),
+  const form = useForm<CreatePlayerCard>({
+    resolver: zodResolver(createPlayerCardSchema),
     defaultValues: {
       name: "",
       position: "",
@@ -38,7 +38,7 @@ export default function PlayerForm({ onCreatePlayer, isLoading }: PlayerFormProp
       defense: 50,
       physical: 50,
       overall: 50,
-      isFusion: 0,
+      isFusion: false,
     },
   });
 
@@ -52,7 +52,7 @@ export default function PlayerForm({ onCreatePlayer, isLoading }: PlayerFormProp
     return overall;
   };
 
-  const onSubmit = (data: InsertPlayer) => {
+  const onSubmit = (data: CreatePlayerCard) => {
     const overall = calculateOverall();
     onCreatePlayer({ ...data, overall });
     form.reset();
@@ -67,7 +67,7 @@ export default function PlayerForm({ onCreatePlayer, isLoading }: PlayerFormProp
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             <div className="space-y-4">
               <FormField
                 control={form.control}
@@ -117,7 +117,7 @@ export default function PlayerForm({ onCreatePlayer, isLoading }: PlayerFormProp
               />
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-4">
               <h3 className="font-medium text-card-foreground">Player Stats (1-99)</h3>
               
               {(['pace', 'shooting', 'passing', 'dribbling', 'defense', 'physical'] as const).map((stat) => (

@@ -1,16 +1,16 @@
-import { Player } from "@shared/schema";
+import { PlayerCard } from "@shared/schema";
 import { exportCardAsPNG } from "@/lib/card-export";
 import { useToast } from "@/hooks/use-toast";
 
 interface PlayerCardProps {
-  player: Player;
+  player: PlayerCard;
   isSelected: boolean;
   fusionMode: boolean;
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
 }
 
-export default function PlayerCard({ 
+export default function PlayerCardView({ 
   player, 
   isSelected, 
   fusionMode, 
