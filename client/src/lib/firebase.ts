@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, signInWithRedirect, GoogleAuthProvider, signInAnonymously, onAuthStateChanged, User } from "firebase/auth";
+import { getAuth, signInWithRedirect, GoogleAuthProvider, signInAnonymously, onAuthStateChanged, User, updateProfile } from "firebase/auth";
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, onSnapshot, query, where, serverTimestamp, Timestamp, deleteDoc, updateDoc } from "firebase/firestore";
 import { Group, PlayerCard, Match, CreateMatch, CreatePlayerCard, UnassignedPlayerCard, CreateUnassignedPlayerCard, PlayerFormData } from "@shared/schema";
 
@@ -41,6 +41,19 @@ export const signInAsAnonymous = async () => {
     return result;
   } catch (error: any) {
     console.error("Anonymous sign-in error:", error);
+    throw error;
+  }
+};
+
+export const updateUserProfile = async (displayName: string): Promise<void> => {
+  try {
+    if (auth.currentUser) {
+      await updateProfile(auth.currentUser, { displayName });
+    } else {
+      throw new Error("No user is currently signed in");
+    }
+  } catch (error: any) {
+    console.error("Update profile error:", error);
     throw error;
   }
 };

@@ -7,6 +7,7 @@ import GroupSelector from "@/components/group-selector";
 import CreateGroup from "@/components/create-group";
 import JoinGroup from "@/components/join-group";
 import GroupDashboard from "@/components/group-dashboard";
+import NameSetup from "@/components/name-setup";
 import { auth } from "@/lib/firebase";
 
 type AppView = 'groups' | 'create-group' | 'join-group' | 'group-dashboard';
@@ -14,6 +15,21 @@ type AppView = 'groups' | 'create-group' | 'join-group' | 'group-dashboard';
 function AppContent({ user }: { user: User }) {
   const [currentView, setCurrentView] = useState<AppView>('groups');
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [userHasName, setUserHasName] = useState(!!user.displayName);
+
+  // Check if user needs to set up their name
+  if (!userHasName) {
+    return (
+      <NameSetup 
+        user={user} 
+        onNameSet={(name) => {
+          setUserHasName(true);
+          // Force re-render with updated user object
+          window.location.reload();
+        }} 
+      />
+    );
+  }
 
   const handleGroupCreated = (groupId: string) => {
     setSelectedGroupId(groupId);
