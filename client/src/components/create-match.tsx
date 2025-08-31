@@ -331,8 +331,24 @@ export default function CreateMatch({ players, onCreateMatch, onCancel, isLoadin
                       </div>
                     </div>
                     
-                    <div className="text-sm text-muted-foreground text-center">
-                      <p>Teams have been balanced based on player stats. Review and confirm to create the match.</p>
+                    <div className="flex flex-col items-center gap-3">
+                      <Button 
+                        data-testid="button-shuffle-teams"
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          const selectedPlayerCards = players.filter(player => selectedPlayers.includes(player.id));
+                          const newTeams = generateBalancedTeams(selectedPlayerCards);
+                          setGeneratedTeams(newTeams);
+                        }}
+                        className="flex items-center gap-2"
+                      >
+                        <i className="fas fa-random"></i>
+                        Shuffle Teams
+                      </Button>
+                      <div className="text-sm text-muted-foreground text-center">
+                        <p>Teams have been balanced based on player stats. Review and confirm to create the match.</p>
+                      </div>
                     </div>
                   </div>
                 )}

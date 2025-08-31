@@ -14,7 +14,7 @@ interface MatchDisplayProps {
 export default function MatchDisplay({ match, players, onEdit, onDelete, onView, canEdit }: MatchDisplayProps) {
   // Create player lookup for quick access
   const playerLookup = players.reduce((acc, player) => {
-    acc[player.uid] = player;
+    acc[player.id] = player;
     return acc;
   }, {} as Record<string, PlayerCard>);
 
@@ -144,8 +144,8 @@ export default function MatchDisplay({ match, players, onEdit, onDelete, onView,
                     <div className="grid grid-cols-1 gap-2">
                       {teamPlayers.map((player) => (
                         <div 
-                          key={player.uid}
-                          data-testid={`team-player-${player.uid}`}
+                          key={player.id}
+                          data-testid={`team-player-${player.id}`}
                           className="flex items-center gap-3 p-2 bg-background border rounded"
                         >
                           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
