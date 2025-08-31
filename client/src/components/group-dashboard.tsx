@@ -279,6 +279,7 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
         match={viewingMatch}
         players={[...playerCards, ...unassignedCards.map((card) => ({
           ...card,
+          id: `unassigned-${card.id}`,
           uid: '',
           createdAt: card.createdAt,
           updatedAt: card.createdAt,
@@ -448,6 +449,7 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
                   match={match}
                   players={[...playerCards, ...unassignedCards.map((card) => ({
                     ...card,
+                    id: `unassigned-${card.id}`,
                     uid: '',
                     createdAt: card.createdAt,
                     updatedAt: card.createdAt,
