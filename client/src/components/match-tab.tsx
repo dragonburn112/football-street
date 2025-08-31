@@ -15,9 +15,10 @@ interface MatchTabProps {
   group: Group;
   user: User;
   onClose: () => void;
+  onShowMVPVoting?: (match: Match) => void;
 }
 
-export default function MatchTab({ match, players, group, user, onClose }: MatchTabProps) {
+export default function MatchTab({ match, players, group, user, onClose, onShowMVPVoting }: MatchTabProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
   const [showGameSettings, setShowGameSettings] = useState(false);
@@ -153,6 +154,18 @@ export default function MatchTab({ match, players, group, user, onClose }: Match
                     )}
                     Shuffle Teams
                   </Button>
+                  {match.status === 'completed' && onShowMVPVoting && (
+                    <Button
+                      data-testid="button-mvp-voting"
+                      onClick={() => onShowMVPVoting(match)}
+                      variant="outline"
+                      size="sm"
+                      className="text-yellow-600 hover:text-yellow-700"
+                    >
+                      <i className="fas fa-trophy mr-2"></i>
+                      MVP Voting
+                    </Button>
+                  )}
                   <Button
                     data-testid="button-delete-match"
                     onClick={handleDeleteMatch}

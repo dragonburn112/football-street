@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithRedirect, signInWithPopup, GoogleAuthProvider, signInAnonymously, onAuthStateChanged, User, updateProfile } from "firebase/auth";
-import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, onSnapshot, query, where, serverTimestamp, Timestamp, deleteDoc, updateDoc } from "firebase/firestore";
+import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, onSnapshot, query, where, serverTimestamp, Timestamp, deleteDoc, updateDoc, writeBatch } from "firebase/firestore";
 import { Group, PlayerCard, Match, CreateMatch, CreatePlayerCard, UnassignedPlayerCard, CreateUnassignedPlayerCard, PlayerFormData } from "@shared/schema";
 
 const firebaseConfig = {
@@ -199,6 +199,10 @@ export async function createPlayerCardForMember(groupId: string, memberUid: stri
     const cardData: Omit<PlayerCard, 'id'> = {
       ...playerData,
       uid: memberUid,
+      goals: 0,
+      assists: 0,
+      mvps: 0,
+      matchesPlayed: 0,
       createdAt: serverTimestamp() as Timestamp,
       updatedAt: serverTimestamp() as Timestamp,
     };
@@ -232,6 +236,10 @@ export async function createAutoPlayerCard(groupId: string, user: User): Promise
       defense: 75,
       physical: 75,
       overall: 75, // Default rating
+      goals: 0,
+      assists: 0,
+      mvps: 0,
+      matchesPlayed: 0,
       createdAt: serverTimestamp() as Timestamp,
       updatedAt: serverTimestamp() as Timestamp,
     };
@@ -516,6 +524,10 @@ export async function createUnassignedPlayerCard(groupId: string, playerData: Pl
   try {
     const cardData: Omit<UnassignedPlayerCard, 'id'> = {
       ...playerData,
+      goals: 0,
+      assists: 0,
+      mvps: 0,
+      matchesPlayed: 0,
       createdBy: createdBy.uid,
       createdAt: serverTimestamp() as Timestamp,
     };
@@ -584,6 +596,10 @@ export async function assignPlayerCardToMember(groupId: string, unassignedCardId
       defense: unassignedCard.defense,
       physical: unassignedCard.physical,
       overall: unassignedCard.overall,
+      goals: unassignedCard.goals || 0,
+      assists: unassignedCard.assists || 0,
+      mvps: unassignedCard.mvps || 0,
+      matchesPlayed: unassignedCard.matchesPlayed || 0,
       createdAt: unassignedCard.createdAt,
       updatedAt: serverTimestamp() as Timestamp,
     };
@@ -602,6 +618,128 @@ export async function assignPlayerCardToMember(groupId: string, unassignedCardId
 // Delete an unassigned player card (admin function)
 export async function deleteUnassignedPlayerCard(groupId: string, cardId: string): Promise<void> {
   await deleteDoc(doc(db, 'groups', groupId, 'unassignedCards', cardId));
+}
+
+// ===== MVP VOTING FUNCTIONS =====
+
+// Open MVP voting for a match (admin function)
+export async function openMVPVoting(groupId: string, matchId: string, adminUid: string): Promise<void> {
+  const matchRef = doc(db, 'groups', groupId, 'matches', matchId);
+  await updateDoc(matchRef, {
+    'mvpVoting.isOpen': true,
+    'mvpVoting.votes': {},
+    'mvpVoting.votingOpenedBy': adminUid,
+    'mvpVoting.votingClosedBy': null,
+    'mvpVoting.mvpWinner': null,
+    'mvpVoting.mvpVoteCount': null,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+// Close MVP voting and determine winner (admin function)
+export async function closeMVPVoting(groupId: string, matchId: string, adminUid: string): Promise<void> {
+  const matchRef = doc(db, 'groups', groupId, 'matches', matchId);
+  const matchDoc = await getDoc(matchRef);
+  
+  if (!matchDoc.exists()) {
+    throw new Error('Match not found');
+  }
+  
+  const match = { id: matchDoc.id, ...matchDoc.data() } as Match;
+  const votes = match.mvpVoting?.votes || {};
+  
+  // Count votes for each player
+  const voteCounts: Record<string, number> = {};
+  Object.values(votes).forEach(votedPlayerUid => {
+    voteCounts[votedPlayerUid] = (voteCounts[votedPlayerUid] || 0) + 1;
+  });
+  
+  // Find winner (player with most votes)
+  let mvpWinner = '';
+  let mvpVoteCount = 0;
+  Object.entries(voteCounts).forEach(([playerUid, count]) => {
+    if (count > mvpVoteCount) {
+      mvpWinner = playerUid;
+      mvpVoteCount = count;
+    }
+  });
+  
+  // Update match with results
+  await updateDoc(matchRef, {
+    'mvpVoting.isOpen': false,
+    'mvpVoting.votingClosedBy': adminUid,
+    'mvpVoting.mvpWinner': mvpWinner,
+    'mvpVoting.mvpVoteCount': mvpVoteCount,
+    updatedAt: serverTimestamp(),
+  });
+  
+  // Update winner's MVP count if there is a winner
+  if (mvpWinner && mvpVoteCount > 0) {
+    const playerRef = doc(db, 'groups', groupId, 'players', mvpWinner);
+    const playerDoc = await getDoc(playerRef);
+    if (playerDoc.exists()) {
+      const currentMvps = playerDoc.data().mvps || 0;
+      await updateDoc(playerRef, {
+        mvps: currentMvps + 1,
+        updatedAt: serverTimestamp(),
+      });
+    }
+  }
+}
+
+// Vote for MVP (player function)
+export async function voteForMVP(groupId: string, matchId: string, voterUid: string, votedPlayerUid: string): Promise<void> {
+  const matchRef = doc(db, 'groups', groupId, 'matches', matchId);
+  await updateDoc(matchRef, {
+    [`mvpVoting.votes.${voterUid}`]: votedPlayerUid,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+// ===== PLAYER STATS MANAGEMENT =====
+
+// Update player goals and assists (admin function)
+export async function updatePlayerStats(
+  groupId: string, 
+  playerUid: string, 
+  statsUpdate: { goals?: number; assists?: number; matchesPlayed?: number }
+): Promise<void> {
+  const playerRef = doc(db, 'groups', groupId, 'players', playerUid);
+  const updateData: any = {
+    updatedAt: serverTimestamp(),
+  };
+  
+  if (statsUpdate.goals !== undefined) {
+    updateData.goals = statsUpdate.goals;
+  }
+  if (statsUpdate.assists !== undefined) {
+    updateData.assists = statsUpdate.assists;
+  }
+  if (statsUpdate.matchesPlayed !== undefined) {
+    updateData.matchesPlayed = statsUpdate.matchesPlayed;
+  }
+  
+  await updateDoc(playerRef, updateData);
+}
+
+// Increment matches played for all players in a match (called when match starts)
+export async function incrementMatchesPlayed(groupId: string, playerUids: string[]): Promise<void> {
+  const batch = writeBatch(db);
+  
+  for (const playerUid of playerUids) {
+    const playerRef = doc(db, 'groups', groupId, 'players', playerUid);
+    const playerDoc = await getDoc(playerRef);
+    
+    if (playerDoc.exists()) {
+      const currentMatches = playerDoc.data().matchesPlayed || 0;
+      batch.update(playerRef, {
+        matchesPlayed: currentMatches + 1,
+        updatedAt: serverTimestamp(),
+      });
+    }
+  }
+  
+  await batch.commit();
 }
 
 // Auth state listener

@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PlayerCardView from "./player-card";
 import TeamGenerator from "./team-generator";
 import EditPlayerForm from "./edit-player-form";
@@ -14,6 +15,9 @@ import MatchDisplay from "./match-display";
 import AdminPanel from "./admin-panel";
 import MatchTab from "./match-tab";
 import PlayerForm from "./player-form";
+import MyCardsTab from "./my-cards-tab";
+import ClubStatsTab from "./club-stats-tab";
+import MVPVoting from "./mvp-voting";
 import { useToast } from "@/hooks/use-toast";
 
 interface GroupDashboardProps {
@@ -33,6 +37,9 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
   const [showCreateUnassigned, setShowCreateUnassigned] = useState(false);
   const [viewingMatch, setViewingMatch] = useState<Match | null>(null);
   const [editingPlayer, setEditingPlayer] = useState<PlayerCard | null>(null);
+  const [showMyCards, setShowMyCards] = useState(false);
+  const [showClubStats, setShowClubStats] = useState(false);
+  const [showMVPVoting, setShowMVPVoting] = useState<{ match: Match; show: boolean }>({ match: null as any, show: false });
   
   const userIsAdmin = group ? isUserAdmin(group, user.uid) : false;
   const { toast } = useToast();
@@ -296,6 +303,42 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
         group={group}
         user={user}
         onClose={() => setViewingMatch(null)}
+        onShowMVPVoting={(match) => setShowMVPVoting({ match, show: true })}
+      />
+    );
+  }
+
+  if (showMVPVoting.show && showMVPVoting.match) {
+    return (
+      <MVPVoting
+        match={showMVPVoting.match}
+        players={playerCards}
+        user={user}
+        groupId={groupId}
+        group={group}
+        onClose={() => setShowMVPVoting({ match: null as any, show: false })}
+      />
+    );
+  }
+
+  if (showMyCards) {
+    return (
+      <MyCardsTab
+        user={user}
+        groupId={groupId}
+        group={group}
+        onBack={() => setShowMyCards(false)}
+      />
+    );
+  }
+
+  if (showClubStats) {
+    return (
+      <ClubStatsTab
+        user={user}
+        groupId={groupId}
+        group={group}
+        onBack={() => setShowClubStats(false)}
       />
     );
   }
@@ -377,6 +420,7 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
 
         {/* Action Buttons */}
         <div className="space-y-4 mb-6">
+          {/* Primary Action Buttons */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {userIsAdmin && (
               <Button 
@@ -389,7 +433,6 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
                 Create Match
               </Button>
             )}
-            
             
             {userIsAdmin && (
               <Button 
@@ -424,6 +467,29 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
                 Leave Group
               </Button>
             )}
+          </div>
+
+          {/* New Feature Buttons */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Button 
+              data-testid="button-my-cards"
+              onClick={() => setShowMyCards(true)}
+              variant="outline"
+              className="flex items-center gap-2 py-6 text-base"
+            >
+              <i className="fas fa-id-card text-blue-500"></i>
+              My Player Card
+            </Button>
+            
+            <Button 
+              data-testid="button-club-stats"
+              onClick={() => setShowClubStats(true)}
+              variant="outline"
+              className="flex items-center gap-2 py-6 text-base"
+            >
+              <i className="fas fa-chart-bar text-green-500"></i>
+              Club Player Stats
+            </Button>
           </div>
         </div>
 

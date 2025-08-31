@@ -13,6 +13,11 @@ export const playerCardSchema = z.object({
   defense: z.number().min(1).max(99),
   physical: z.number().min(1).max(99),
   overall: z.number().min(1).max(99),
+  // Player statistics
+  goals: z.number().min(0).default(0),
+  assists: z.number().min(0).default(0),
+  mvps: z.number().min(0).default(0),
+  matchesPlayed: z.number().min(0).default(0),
   createdAt: z.any(), // Firebase Timestamp
   updatedAt: z.any(), // Firebase Timestamp
 });
@@ -36,6 +41,11 @@ export const unassignedPlayerCardSchema = z.object({
   defense: z.number().min(1).max(99),
   physical: z.number().min(1).max(99),
   overall: z.number().min(1).max(99),
+  // Player statistics
+  goals: z.number().min(0).default(0),
+  assists: z.number().min(0).default(0),
+  mvps: z.number().min(0).default(0),
+  matchesPlayed: z.number().min(0).default(0),
   createdBy: z.string(), // UID of admin who created this card
   createdAt: z.any(), // Firebase Timestamp
 });
@@ -102,6 +112,15 @@ export const matchSchema = z.object({
     }),
   })),
   status: z.enum(["draft", "active", "completed"]).default("draft"),
+  // MVP Voting System
+  mvpVoting: z.object({
+    isOpen: z.boolean().default(false),
+    votes: z.record(z.string(), z.string()), // voterUid -> votedPlayerUid
+    votingOpenedBy: z.string().optional(), // admin who opened voting
+    votingClosedBy: z.string().optional(), // admin who closed voting
+    mvpWinner: z.string().optional(), // final MVP player UID
+    mvpVoteCount: z.number().optional(), // votes received by MVP
+  }).optional(),
   createdAt: z.any(), // Firebase Timestamp
   updatedAt: z.any(), // Firebase Timestamp
 });
