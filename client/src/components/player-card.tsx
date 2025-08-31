@@ -36,33 +36,42 @@ export default function PlayerCardView({ player, onEdit, onDelete, isOwner, canE
   return (
     <div 
       data-testid={`card-player-${player.id}`}
-      className={`${getCardStyle()} rounded-lg p-4 relative transform transition-all duration-300 hover:scale-105`}
+      className={`${getCardStyle()} rounded-lg p-3 relative transform transition-all duration-300 hover:scale-105 min-h-[280px] flex flex-col`}
     >
-
-      
       {/* Overall Rating */}
-      <div className="text-center mb-3">
+      <div className="text-center mb-2">
         <div 
           data-testid={`text-overall-${player.id}`}
-          className="text-4xl font-black text-white mb-1"
+          className="text-3xl font-black text-white"
         >
           {player.overall}
         </div>
       </div>
       
       {/* Player Info */}
-      <div className="bg-white/10 rounded-lg p-3 mb-3">
-        <div className="w-16 h-20 bg-white/20 rounded mx-auto mb-2 flex items-center justify-center">
+      <div className="bg-white/10 rounded-lg p-2 mb-3 flex-shrink-0">
+        <div className="w-12 h-16 bg-white/20 rounded mx-auto mb-2 flex items-center justify-center">
           {player.profilePic ? (
-            <span className="text-3xl">{player.profilePic}</span>
+            player.profilePic.startsWith('/objects/') ? (
+              <img 
+                src={player.profilePic} 
+                alt="Profile" 
+                className="w-full h-full object-cover rounded"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            ) : (
+              <span className="text-2xl">{player.profilePic}</span>
+            )
           ) : (
-            <i className="fas fa-user text-white/60 text-2xl"></i>
+            <i className="fas fa-user text-white/60 text-xl"></i>
           )}
         </div>
         <div className="text-center">
           <div 
             data-testid={`text-name-${player.id}`}
-            className="font-bold text-white text-sm"
+            className="font-bold text-white text-xs"
           >
             {player.name}
           </div>
@@ -75,7 +84,7 @@ export default function PlayerCardView({ player, onEdit, onDelete, isOwner, canE
           </div>
           {isOwner && (
             <div className="mt-1">
-              <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded">
+              <span className="text-xs bg-blue-500/20 text-blue-300 px-1 py-0.5 rounded">
                 You
               </span>
             </div>
@@ -83,30 +92,30 @@ export default function PlayerCardView({ player, onEdit, onDelete, isOwner, canE
         </div>
       </div>
       
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-1 text-xs text-white/90">
+      {/* Stats - Now with better spacing and background */}
+      <div className="bg-white/10 rounded-lg p-2 grid grid-cols-2 gap-1 text-xs text-white font-medium flex-grow">
         <div className="flex justify-between">
-          <span>PAC</span>
+          <span className="font-bold">PAC</span>
           <span data-testid={`stat-pace-${player.id}`}>{player.pace}</span>
         </div>
         <div className="flex justify-between">
-          <span>SHO</span>
+          <span className="font-bold">SHO</span>
           <span data-testid={`stat-shooting-${player.id}`}>{player.shooting}</span>
         </div>
         <div className="flex justify-between">
-          <span>PAS</span>
+          <span className="font-bold">PAS</span>
           <span data-testid={`stat-passing-${player.id}`}>{player.passing}</span>
         </div>
         <div className="flex justify-between">
-          <span>DRI</span>
+          <span className="font-bold">DRI</span>
           <span data-testid={`stat-dribbling-${player.id}`}>{player.dribbling}</span>
         </div>
         <div className="flex justify-between">
-          <span>DEF</span>
+          <span className="font-bold">DEF</span>
           <span data-testid={`stat-defense-${player.id}`}>{player.defense}</span>
         </div>
         <div className="flex justify-between">
-          <span>PHY</span>
+          <span className="font-bold">PHY</span>
           <span data-testid={`stat-physical-${player.id}`}>{player.physical}</span>
         </div>
       </div>
