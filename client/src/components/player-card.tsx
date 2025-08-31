@@ -1,13 +1,12 @@
 import { PlayerCard } from "@shared/schema";
-import { exportCardAsPNG } from "@/lib/card-export";
-import { useToast } from "@/hooks/use-toast";
 
 interface PlayerCardProps {
   player: PlayerCard;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
-export default function PlayerCardView({ player }: PlayerCardProps) {
-  const { toast } = useToast();
+export default function PlayerCardView({ player, onEdit, onDelete }: PlayerCardProps) {
 
   const getCardStyle = () => {
     if (player.overall >= 85) {
@@ -19,21 +18,14 @@ export default function PlayerCardView({ player }: PlayerCardProps) {
     }
   };
 
-  const handleExport = async (e: React.MouseEvent) => {
+  const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
-    try {
-      await exportCardAsPNG(player);
-      toast({
-        title: "Success",
-        description: "Card exported as PNG!",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to export card",
-        variant: "destructive",
-      });
-    }
+    onEdit(player.id);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDelete(player.id);
   };
 
 
@@ -57,7 +49,11 @@ export default function PlayerCardView({ player }: PlayerCardProps) {
       {/* Player Info */}
       <div className="bg-white/10 rounded-lg p-3 mb-3">
         <div className="w-16 h-20 bg-white/20 rounded mx-auto mb-2 flex items-center justify-center">
-          <i className="fas fa-user text-white/60 text-2xl"></i>
+          {player.profilePic ? (
+            <span className="text-3xl">{player.profilePic}</span>
+          ) : (
+            <i className="fas fa-user text-white/60 text-2xl"></i>
+          )}
         </div>
         <div className="text-center">
           <div 
@@ -98,14 +94,22 @@ export default function PlayerCardView({ player }: PlayerCardProps) {
       </div>
       
       {/* Action Buttons */}
-      <div className="absolute bottom-2 right-2">
+      <div className="absolute bottom-2 right-2 flex gap-2">
         <button 
-          data-testid={`button-export-${player.id}`}
-          onClick={handleExport}
-          className="text-white/70 hover:text-white transition-colors"
-          title="Export as PNG"
+          data-testid={`button-edit-${player.id}`}
+          onClick={handleEdit}
+          className="text-white/70 hover:text-blue-400 transition-colors"
+          title="Edit card"
         >
-          <i className="fas fa-download text-sm"></i>
+          <i className="fas fa-edit text-sm"></i>
+        </button>
+        <button 
+          data-testid={`button-delete-${player.id}`}
+          onClick={handleDelete}
+          className="text-white/70 hover:text-red-400 transition-colors"
+          title="Delete card"
+        >
+          <i className="fas fa-trash text-sm"></i>
         </button>
       </div>
     </div>

@@ -17,6 +17,7 @@ export default function PlayerForm({ onCreatePlayer, isLoading }: PlayerFormProp
     resolver: zodResolver(createPlayerCardSchema),
     defaultValues: {
       name: "",
+      profilePic: "⚽",
       pace: 50,
       shooting: 50,
       passing: 50,
@@ -66,6 +67,45 @@ export default function PlayerForm({ onCreatePlayer, isLoading }: PlayerFormProp
                         placeholder="Enter player name" 
                         {...field} 
                       />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="profilePic"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Profile Picture</FormLabel>
+                    <FormControl>
+                      <div className="space-y-3">
+                        <div className="flex flex-wrap gap-2">
+                          {['⚽', '👤', '🏃‍♂️', '🏃‍♀️', '👨‍🦱', '👩‍🦱', '👨', '👩', '🧔', '👱‍♂️', '👱‍♀️', '👨‍🦰', '👩‍🦰'].map((emoji) => (
+                            <button
+                              key={emoji}
+                              type="button"
+                              data-testid={`emoji-${emoji}`}
+                              onClick={() => field.onChange(emoji)}
+                              className={`w-12 h-12 rounded-lg border-2 text-2xl flex items-center justify-center transition-colors ${
+                                field.value === emoji 
+                                  ? 'border-primary bg-primary/10' 
+                                  : 'border-border hover:border-primary/50'
+                              }`}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                        <Input 
+                          data-testid="input-custom-profile"
+                          placeholder="Or enter custom emoji/text"
+                          value={field.value || ""}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          className="text-center"
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

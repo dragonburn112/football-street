@@ -6,6 +6,7 @@ export const playerCardSchema = z.object({
   groupId: z.string(),
   createdBy: z.string(),
   name: z.string().min(1, "Player name is required"),
+  profilePic: z.string().optional(), // URL or emoji for profile picture
   pace: z.number().min(1).max(99),
   shooting: z.number().min(1).max(99),
   passing: z.number().min(1).max(99),

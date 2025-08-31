@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { User } from "firebase/auth";
 import { Group, PlayerCard, CreatePlayerCard } from "@shared/schema";
-import { subscribeToGroup, subscribeToGroupPlayerCards, createPlayerCard } from "@/lib/firebase";
+import { subscribeToGroup, subscribeToGroupPlayerCards, createPlayerCard, updatePlayerCard, deletePlayerCard } from "@/lib/firebase";
 import { generateBalancedTeams } from "@/lib/team-balancer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import PlayerForm from "./player-form";
 import PlayerCardView from "./player-card";
 import TeamGenerator from "./team-generator";
+import EditPlayerForm from "./edit-player-form";
 import { useToast } from "@/hooks/use-toast";
 
 interface GroupDashboardProps {
@@ -23,6 +24,7 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
   const [playerCards, setPlayerCards] = useState<PlayerCard[]>([]);
   const [showCreatePlayer, setShowCreatePlayer] = useState(false);
   const [showTeamGenerator, setShowTeamGenerator] = useState(false);
+  const [editingPlayer, setEditingPlayer] = useState<PlayerCard | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -47,6 +49,48 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
       toast({
         title: "Error",
         description: "Failed to create player card",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditPlayer = (playerId: string) => {
+    const player = playerCards.find(p => p.id === playerId);
+    if (player) {
+      setEditingPlayer(player);
+    }
+  };
+
+  const handleUpdatePlayer = async (updates: Partial<CreatePlayerCard>) => {
+    if (!editingPlayer) return;
+    
+    try {
+      await updatePlayerCard(editingPlayer.id, updates);
+      setEditingPlayer(null);
+      toast({
+        title: "Success",
+        description: "Player card updated!",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update player card",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeletePlayer = async (playerId: string) => {
+    try {
+      await deletePlayerCard(playerId);
+      toast({
+        title: "Success",
+        description: "Player card deleted!",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete player card",
         variant: "destructive",
       });
     }
@@ -83,6 +127,17 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
           />
         </div>
       </div>
+    );
+  }
+
+  if (editingPlayer) {
+    return (
+      <EditPlayerForm 
+        player={editingPlayer}
+        onUpdatePlayer={handleUpdatePlayer}
+        onCancel={() => setEditingPlayer(null)}
+        isLoading={false}
+      />
     );
   }
 
@@ -199,6 +254,8 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
                 <PlayerCardView
                   key={player.id}
                   player={player}
+                  onEdit={handleEditPlayer}
+                  onDelete={handleDeletePlayer}
                 />
               ))}
             </div>

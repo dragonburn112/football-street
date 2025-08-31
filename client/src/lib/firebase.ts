@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithRedirect, GoogleAuthProvider, signInAnonymously, onAuthStateChanged, User } from "firebase/auth";
-import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, onSnapshot, query, where, serverTimestamp, Timestamp } from "firebase/firestore";
+import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, onSnapshot, query, where, serverTimestamp, Timestamp, deleteDoc, updateDoc } from "firebase/firestore";
 import { Group, PlayerCard } from "@shared/schema";
 
 const firebaseConfig = {
@@ -172,6 +172,16 @@ export function subscribeToGroupPlayerCards(groupId: string, callback: (cards: P
     });
     callback(cards);
   });
+}
+
+// Update a player card
+export async function updatePlayerCard(cardId: string, updates: Partial<Omit<PlayerCard, 'id' | 'groupId' | 'createdBy' | 'createdAt'>>): Promise<void> {
+  await updateDoc(doc(db, 'playerCards', cardId), updates);
+}
+
+// Delete a player card
+export async function deletePlayerCard(cardId: string): Promise<void> {
+  await deleteDoc(doc(db, 'playerCards', cardId));
 }
 
 // Auth state listener
