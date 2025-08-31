@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, signInWithRedirect, GoogleAuthProvider, signInAnonymously, onAuthStateChanged, User, updateProfile } from "firebase/auth";
+import { getAuth, signInWithRedirect, signInWithPopup, GoogleAuthProvider, signInAnonymously, onAuthStateChanged, User, updateProfile } from "firebase/auth";
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, onSnapshot, query, where, serverTimestamp, Timestamp, deleteDoc, updateDoc } from "firebase/firestore";
 import { Group, PlayerCard, Match, CreateMatch, CreatePlayerCard, UnassignedPlayerCard, CreateUnassignedPlayerCard, PlayerFormData } from "@shared/schema";
 
@@ -27,7 +27,7 @@ provider.addScope('profile');
 
 export const signInWithGoogle = async () => {
   try {
-    console.log("🚀 INITIATING GOOGLE SIGN-IN...");
+    console.log("🚀 TRYING POPUP SIGN-IN...");
     
     // Sign out any existing user (including anonymous users)
     if (auth.currentUser) {
@@ -38,12 +38,27 @@ export const signInWithGoogle = async () => {
       await auth.signOut();
     }
     
-    console.log("📋 Provider config:", {
-      providerId: provider.providerId
-    });
-    
-    await signInWithRedirect(auth, provider);
-    console.log("✅ signInWithRedirect completed successfully");
+    // Try popup first (better for mobile)
+    try {
+      const result = await signInWithPopup(auth, provider);
+      console.log("✅ POPUP SIGN-IN SUCCESS:", {
+        uid: result.user.uid,
+        email: result.user.email,
+        displayName: result.user.displayName
+      });
+      return result.user;
+    } catch (popupError: any) {
+      console.log("⚠️ Popup failed, trying redirect:", popupError.code);
+      
+      // Fallback to redirect if popup fails
+      if (popupError.code === 'auth/popup-blocked' || popupError.code === 'auth/popup-closed-by-user') {
+        console.log("🔄 Using redirect fallback...");
+        await signInWithRedirect(auth, provider);
+        console.log("✅ signInWithRedirect initiated");
+      } else {
+        throw popupError;
+      }
+    }
   } catch (error: any) {
     console.error("❌ GOOGLE SIGN-IN ERROR:", {
       code: error.code,

@@ -100,11 +100,21 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
                 try {
                   console.log("🔘 User clicked Google sign-in button");
                   setAuthError(null);
-                  await signInWithGoogle();
-                  console.log("🎯 Google sign-in initiated successfully");
+                  setLoading(true);
+                  
+                  const result = await signInWithGoogle();
+                  if (result) {
+                    console.log("🎯 Google sign-in completed immediately with popup");
+                    setUser(result);
+                    setLoading(false);
+                  } else {
+                    console.log("🔄 Google sign-in using redirect - waiting for callback");
+                    // Don't set loading to false here - let the auth state change handle it
+                  }
                 } catch (error: any) {
                   console.error("🚨 Google sign-in button error:", error);
                   setAuthError(error.message);
+                  setLoading(false);
                 }
               }}
               className="w-full flex items-center gap-3 text-base py-6"
