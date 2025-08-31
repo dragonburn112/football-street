@@ -4,23 +4,40 @@ import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, onSnaps
 import { Group, PlayerCard, Match, CreateMatch, CreatePlayerCard, UnassignedPlayerCard, CreateUnassignedPlayerCard, PlayerFormData } from "@shared/schema";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDbLukHyz1FHkFvOK6Lyiq3IN7uP_fm9MM",
-  authDomain: "footballstreet-2c7bb.firebaseapp.com",
-  projectId: "footballstreet-2c7bb",
-  storageBucket: "footballstreet-2c7bb.firebasestorage.app",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebasestorage.app`,
   messagingSenderId: "59591760301",
-  appId: "1:59591760301:web:cce4aa07129481e997e924",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
   measurementId: "G-9WY7BMG6T1"
 };
 
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase app only once
+import { getApps, getApp } from 'firebase/app';
+
+let app;
+const existingApps = getApps();
+if (existingApps.length > 0) {
+  app = getApp();
+} else {
+  app = initializeApp(firebaseConfig);
+}
+
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
 const provider = new GoogleAuthProvider();
+// Configure the provider to get email and profile
+provider.setCustomParameters({
+  prompt: 'select_account'
+});
+provider.addScope('email');
+provider.addScope('profile');
 
 export const signInWithGoogle = async () => {
   try {
+    console.log("Initiating Google sign-in...");
     await signInWithRedirect(auth, provider);
   } catch (error: any) {
     console.error("Google sign-in error:", error);

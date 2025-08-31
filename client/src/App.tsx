@@ -86,12 +86,12 @@ function AppContent({ user }: { user: User }) {
 
 function App() {
   return (
-    <TooltipProvider>
+    <>
       <Toaster />
       <AuthWrapper>
         {(user) => <AppContent user={user} />}
       </AuthWrapper>
-    </TooltipProvider>
+    </>
   );
 }
 
