@@ -43,6 +43,7 @@ export default function PlayerCardView({ player, onEdit, onDelete, isOwner, canE
         <div 
           data-testid={`text-overall-${player.id}`}
           className="text-3xl font-black text-white"
+          style={{textShadow: '2px 2px 4px rgba(0,0,0,0.9)'}}
         >
           {player.overall}
         </div>
@@ -72,15 +73,9 @@ export default function PlayerCardView({ player, onEdit, onDelete, isOwner, canE
           <div 
             data-testid={`text-name-${player.id}`}
             className="font-bold text-white text-xs"
+            style={{textShadow: '1px 1px 2px rgba(0,0,0,0.8)'}}
           >
             {player.name}
-          </div>
-          <div 
-            data-testid={`text-role-${player.id}`}
-            className={`text-xs mt-0.5 flex items-center justify-center gap-1 ${getRoleColor(player.overall)}`}
-          >
-            <span>{getPlayerRole(player).icon}</span>
-            <span>{getPlayerRole(player).title}</span>
           </div>
           {isOwner && (
             <div className="mt-0.5">
@@ -89,11 +84,18 @@ export default function PlayerCardView({ player, onEdit, onDelete, isOwner, canE
               </span>
             </div>
           )}
+          <div 
+            data-testid={`text-role-${player.id}`}
+            className={`text-xs mt-0.5 flex items-center justify-center gap-1 ${getRoleColor(player.overall)}`}
+          >
+            <span>{getPlayerRole(player).icon}</span>
+            <span>{getPlayerRole(player).title}</span>
+          </div>
         </div>
       </div>
       
       {/* Stats - Moved much higher */}
-      <div className="bg-white/10 rounded-lg p-2 grid grid-cols-2 gap-y-1 gap-x-2 text-xs text-white font-medium">
+      <div className="bg-white/10 rounded-lg p-2 grid grid-cols-2 gap-y-1 gap-x-2 text-xs text-white font-medium" style={{textShadow: '1px 1px 2px rgba(0,0,0,0.8)'}}>
         <div className="flex justify-between">
           <span className="font-bold">PAC</span>
           <span data-testid={`stat-pace-${player.id}`}>{player.pace}</span>
