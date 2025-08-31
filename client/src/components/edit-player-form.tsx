@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import ImageUploader from "./ImageUploader";
 
 interface EditPlayerFormProps {
   player: PlayerCard;
@@ -23,7 +24,7 @@ export default function EditPlayerForm({ player, onUpdatePlayer, onCancel, isLoa
     resolver: zodResolver(createPlayerCardSchema),
     defaultValues: {
       name: player.name,
-      club: player.club,
+      club: "Street FC",
       profilePic: player.profilePic || "⚽",
       pace: player.pace,
       shooting: player.shooting,
@@ -93,23 +94,6 @@ export default function EditPlayerForm({ player, onUpdatePlayer, onCancel, isLoa
                       )}
                     />
                     
-                    <FormField
-                      control={form.control}
-                      name="club"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Club</FormLabel>
-                          <FormControl>
-                            <Input 
-                              data-testid="input-edit-player-club"
-                              placeholder="Enter club name" 
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                     
                     <FormField
                       control={form.control}
@@ -118,31 +102,48 @@ export default function EditPlayerForm({ player, onUpdatePlayer, onCancel, isLoa
                         <FormItem>
                           <FormLabel>Profile Picture</FormLabel>
                           <FormControl>
-                            <div className="space-y-3">
-                              <div className="flex flex-wrap gap-2">
-                                {profileEmojis.map((emoji) => (
-                                  <button
-                                    key={emoji}
-                                    type="button"
-                                    data-testid={`emoji-${emoji}`}
-                                    onClick={() => field.onChange(emoji)}
-                                    className={`w-12 h-12 rounded-lg border-2 text-2xl flex items-center justify-center transition-colors ${
-                                      field.value === emoji 
-                                        ? 'border-primary bg-primary/10' 
-                                        : 'border-border hover:border-primary/50'
-                                    }`}
-                                  >
-                                    {emoji}
-                                  </button>
-                                ))}
-                              </div>
-                              <Input 
-                                data-testid="input-custom-profile"
-                                placeholder="Or enter custom emoji/text"
-                                value={field.value || ""}
-                                onChange={(e) => field.onChange(e.target.value)}
-                                className="text-center"
+                            <div className="space-y-4">
+                              {/* Image Upload Section */}
+                              <ImageUploader
+                                currentImage={field.value?.startsWith('/objects/') ? field.value : undefined}
+                                onImageUploaded={(imageUrl) => field.onChange(imageUrl)}
+                                className="border rounded-lg p-4 bg-muted/50"
                               />
+                              
+                              {/* Divider */}
+                              <div className="flex items-center gap-3">
+                                <div className="flex-1 border-t border-border"></div>
+                                <span className="text-xs text-muted-foreground px-2">or choose emoji</span>
+                                <div className="flex-1 border-t border-border"></div>
+                              </div>
+                              
+                              {/* Emoji Selection */}
+                              <div className="space-y-3">
+                                <div className="flex flex-wrap gap-2">
+                                  {profileEmojis.map((emoji) => (
+                                    <button
+                                      key={emoji}
+                                      type="button"
+                                      data-testid={`emoji-${emoji}`}
+                                      onClick={() => field.onChange(emoji)}
+                                      className={`w-12 h-12 rounded-lg border-2 text-2xl flex items-center justify-center transition-colors ${
+                                        field.value === emoji 
+                                          ? 'border-primary bg-primary/10' 
+                                          : 'border-border hover:border-primary/50'
+                                      }`}
+                                    >
+                                      {emoji}
+                                    </button>
+                                  ))}
+                                </div>
+                                <Input 
+                                  data-testid="input-custom-profile"
+                                  placeholder="Or enter custom emoji/text"
+                                  value={!field.value?.startsWith('/objects/') ? field.value || "" : ""}
+                                  onChange={(e) => field.onChange(e.target.value)}
+                                  className="text-center"
+                                />
+                              </div>
                             </div>
                           </FormControl>
                           <FormMessage />

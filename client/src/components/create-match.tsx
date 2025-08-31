@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { generateBalancedTeams } from "@/lib/team-balancer";
+import { getPlayerRole, getRoleColor } from "@/lib/player-roles";
 
 interface CreateMatchProps {
   players: PlayerCard[];
@@ -295,7 +296,10 @@ export default function CreateMatch({ players, onCreateMatch, onCancel, isLoadin
                               </div>
                               <div>
                                 <div className="font-medium text-sm">{player.name}</div>
-                                <div className="text-xs text-muted-foreground">{player.club}</div>
+                                <div className={`text-xs flex items-center gap-1 ${getRoleColor(player.overall)}`}>
+                                  <span>{getPlayerRole(player).icon}</span>
+                                  <span>{getPlayerRole(player).title}</span>
+                                </div>
                               </div>
                             </div>
                           ))}
@@ -324,7 +328,10 @@ export default function CreateMatch({ players, onCreateMatch, onCancel, isLoadin
                               </div>
                               <div>
                                 <div className="font-medium text-sm">{player.name}</div>
-                                <div className="text-xs text-muted-foreground">{player.club}</div>
+                                <div className={`text-xs flex items-center gap-1 ${getRoleColor(player.overall)}`}>
+                                  <span>{getPlayerRole(player).icon}</span>
+                                  <span>{getPlayerRole(player).title}</span>
+                                </div>
                               </div>
                             </div>
                           ))}

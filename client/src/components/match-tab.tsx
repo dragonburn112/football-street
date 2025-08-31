@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { getPlayerRole, getRoleColor } from "@/lib/player-roles";
 
 interface MatchTabProps {
   match: Match;
@@ -164,17 +165,24 @@ export default function MatchTab({ match, players, group, user, onClose }: Match
                   </div>
                 </div>
                 <div className="space-y-2">
-                  {teamPlayers.map((player) => (
-                    <div key={player.id} className="flex items-center gap-2 p-2 bg-background/50 rounded">
-                      <div className={`w-8 h-8 ${isTeamA ? 'bg-blue-500' : 'bg-red-500'} rounded-full flex items-center justify-center text-white text-xs font-bold`}>
-                        {player.overall}
+                  {teamPlayers.map((player) => {
+                    const role = getPlayerRole(player);
+                    const roleColor = getRoleColor(player.overall);
+                    return (
+                      <div key={player.id} className="flex items-center gap-2 p-2 bg-background/50 rounded">
+                        <div className={`w-8 h-8 ${isTeamA ? 'bg-blue-500' : 'bg-red-500'} rounded-full flex items-center justify-center text-white text-xs font-bold`}>
+                          {player.overall}
+                        </div>
+                        <div>
+                          <div className="font-medium text-sm">{player.name}</div>
+                          <div className={`text-xs flex items-center gap-1 ${roleColor}`}>
+                            <span>{role.icon}</span>
+                            <span>{role.title}</span>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="font-medium text-sm">{player.name}</div>
-                        <div className="text-xs text-muted-foreground">{player.club}</div>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 <div className="text-xs text-muted-foreground mt-2">
                   Players ({teamPlayers.length})

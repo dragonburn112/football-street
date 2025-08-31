@@ -378,26 +378,18 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
         {/* Action Buttons */}
         <div className="space-y-4 mb-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Button 
-              data-testid="button-create-match"
-              onClick={() => setShowCreateMatch(true)}
-              disabled={playerCards.length + unassignedCards.length < 4}
-              className="flex items-center gap-2 py-6 text-base"
-            >
-              <i className="fas fa-futbol"></i>
-              Create Match
-            </Button>
+            {userIsAdmin && (
+              <Button 
+                data-testid="button-create-match"
+                onClick={() => setShowCreateMatch(true)}
+                disabled={playerCards.length + unassignedCards.length < 4}
+                className="flex items-center gap-2 py-6 text-base"
+              >
+                <i className="fas fa-futbol"></i>
+                Create Match
+              </Button>
+            )}
             
-            <Button 
-              data-testid="button-generate-teams"
-              onClick={() => setShowTeamGenerator(true)}
-              disabled={playerCards.length + unassignedCards.length < 2}
-              variant="outline"
-              className="flex items-center gap-2 py-6 text-base"
-            >
-              <i className="fas fa-random"></i>
-              Fair Teams
-            </Button>
             
             {userIsAdmin && (
               <Button 
