@@ -16,7 +16,15 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
 
   useEffect(() => {
     // Handle redirect result first
-    handleAuthRedirect();
+    const processAuth = async () => {
+      try {
+        await handleAuthRedirect();
+      } catch (error: any) {
+        console.error("Auth redirect processing error:", error);
+      }
+    };
+    
+    processAuth();
     
     const unsubscribe = onAuthStateChange((user) => {
       setUser(user);
@@ -53,9 +61,9 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
           <CardContent className="space-y-4">
             {authError && (
               <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
-                <p className="text-sm text-destructive font-medium">Authentication Setup Required</p>
+                <p className="text-sm text-destructive font-medium">Authentication Error</p>
                 <p className="text-xs text-destructive/80 mt-1">
-                  Please enable Google and Anonymous authentication in your Firebase console under Authentication → Sign-in method.
+                  {authError}
                 </p>
               </div>
             )}
