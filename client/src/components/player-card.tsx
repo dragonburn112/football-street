@@ -2,11 +2,13 @@ import { PlayerCard } from "@shared/schema";
 
 interface PlayerCardProps {
   player: PlayerCard;
-  onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  isOwner?: boolean;
+  canEdit?: boolean;
 }
 
-export default function PlayerCardView({ player, onEdit, onDelete }: PlayerCardProps) {
+export default function PlayerCardView({ player, onEdit, onDelete, isOwner, canEdit }: PlayerCardProps) {
 
   const getCardStyle = () => {
     if (player.overall >= 85) {
@@ -20,12 +22,12 @@ export default function PlayerCardView({ player, onEdit, onDelete }: PlayerCardP
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onEdit(player.id);
+    if (onEdit) onEdit(player.id);
   };
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onDelete(player.id);
+    if (onDelete) onDelete(player.id);
   };
 
 
@@ -62,6 +64,19 @@ export default function PlayerCardView({ player, onEdit, onDelete }: PlayerCardP
           >
             {player.name}
           </div>
+          <div 
+            data-testid={`text-club-${player.id}`}
+            className="text-white/80 text-xs mt-1"
+          >
+            {player.club}
+          </div>
+          {isOwner && (
+            <div className="mt-1">
+              <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded">
+                You
+              </span>
+            </div>
+          )}
         </div>
       </div>
       
@@ -94,24 +109,30 @@ export default function PlayerCardView({ player, onEdit, onDelete }: PlayerCardP
       </div>
       
       {/* Action Buttons */}
-      <div className="absolute bottom-2 right-2 flex gap-2">
-        <button 
-          data-testid={`button-edit-${player.id}`}
-          onClick={handleEdit}
-          className="text-white/70 hover:text-blue-400 transition-colors"
-          title="Edit card"
-        >
-          <i className="fas fa-edit text-sm"></i>
-        </button>
-        <button 
-          data-testid={`button-delete-${player.id}`}
-          onClick={handleDelete}
-          className="text-white/70 hover:text-red-400 transition-colors"
-          title="Delete card"
-        >
-          <i className="fas fa-trash text-sm"></i>
-        </button>
-      </div>
+      {canEdit && (
+        <div className="absolute bottom-2 right-2 flex gap-2">
+          {onEdit && (
+            <button 
+              data-testid={`button-edit-${player.id}`}
+              onClick={handleEdit}
+              className="text-white/70 hover:text-blue-400 transition-colors"
+              title="Edit card"
+            >
+              <i className="fas fa-edit text-sm"></i>
+            </button>
+          )}
+          {onDelete && (
+            <button 
+              data-testid={`button-delete-${player.id}`}
+              onClick={handleDelete}
+              className="text-white/70 hover:text-red-400 transition-colors"
+              title="Delete card"
+            >
+              <i className="fas fa-trash text-sm"></i>
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

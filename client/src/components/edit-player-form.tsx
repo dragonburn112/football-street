@@ -23,6 +23,7 @@ export default function EditPlayerForm({ player, onUpdatePlayer, onCancel, isLoa
     resolver: zodResolver(createPlayerCardSchema),
     defaultValues: {
       name: player.name,
+      club: player.club,
       profilePic: player.profilePic || "⚽",
       pace: player.pace,
       shooting: player.shooting,
@@ -84,6 +85,24 @@ export default function EditPlayerForm({ player, onUpdatePlayer, onCancel, isLoa
                             <Input 
                               data-testid="input-edit-player-name"
                               placeholder="Enter player name" 
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="club"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Club</FormLabel>
+                          <FormControl>
+                            <Input 
+                              data-testid="input-edit-player-club"
+                              placeholder="Enter club name" 
                               {...field} 
                             />
                           </FormControl>

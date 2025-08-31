@@ -7,13 +7,14 @@ interface MatchDisplayProps {
   players: PlayerCard[];
   onEdit?: () => void;
   onDelete?: () => void;
+  onView?: () => void;
   canEdit?: boolean;
 }
 
-export default function MatchDisplay({ match, players, onEdit, onDelete, canEdit }: MatchDisplayProps) {
+export default function MatchDisplay({ match, players, onEdit, onDelete, onView, canEdit }: MatchDisplayProps) {
   // Create player lookup for quick access
   const playerLookup = players.reduce((acc, player) => {
-    acc[player.id] = player;
+    acc[player.uid] = player;
     return acc;
   }, {} as Record<string, PlayerCard>);
 
@@ -42,31 +43,44 @@ export default function MatchDisplay({ match, players, onEdit, onDelete, canEdit
                 {match.numberOfTeams} teams • {match.playersPerTeam} players each • Created {formatDate(match.createdAt)}
               </p>
             </div>
-            {canEdit && (
-              <div className="flex gap-2">
-                {onEdit && (
-                  <Button
-                    data-testid={`button-edit-match-${match.id}`}
-                    onClick={onEdit}
-                    variant="outline"
-                    size="sm"
-                  >
-                    <i className="fas fa-edit"></i>
-                  </Button>
-                )}
-                {onDelete && (
-                  <Button
-                    data-testid={`button-delete-match-${match.id}`}
-                    onClick={onDelete}
-                    variant="outline"
-                    size="sm"
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <i className="fas fa-trash"></i>
-                  </Button>
-                )}
-              </div>
-            )}
+            <div className="flex gap-2">
+              {onView && (
+                <Button
+                  data-testid={`button-view-match-${match.id}`}
+                  onClick={onView}
+                  variant="outline"
+                  size="sm"
+                >
+                  <i className="fas fa-eye mr-1"></i>
+                  View
+                </Button>
+              )}
+              {canEdit && (
+                <>
+                  {onEdit && (
+                    <Button
+                      data-testid={`button-edit-match-${match.id}`}
+                      onClick={onEdit}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <i className="fas fa-edit"></i>
+                    </Button>
+                  )}
+                  {onDelete && (
+                    <Button
+                      data-testid={`button-delete-match-${match.id}`}
+                      onClick={onDelete}
+                      variant="outline"
+                      size="sm"
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <i className="fas fa-trash"></i>
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </CardHeader>
       </Card>
@@ -130,8 +144,8 @@ export default function MatchDisplay({ match, players, onEdit, onDelete, canEdit
                     <div className="grid grid-cols-1 gap-2">
                       {teamPlayers.map((player) => (
                         <div 
-                          key={player.id}
-                          data-testid={`team-player-${player.id}`}
+                          key={player.uid}
+                          data-testid={`team-player-${player.uid}`}
                           className="flex items-center gap-3 p-2 bg-background border rounded"
                         >
                           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -143,7 +157,7 @@ export default function MatchDisplay({ match, players, onEdit, onDelete, canEdit
                           </div>
                           <div className="flex-1">
                             <p className="font-medium text-sm">{player.name}</p>
-                            <p className="text-xs text-muted-foreground">Overall: {player.overall}</p>
+                            <p className="text-xs text-muted-foreground">{player.club} • Overall: {player.overall}</p>
                           </div>
                         </div>
                       ))}

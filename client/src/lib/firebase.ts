@@ -66,12 +66,18 @@ export async function createGroup(groupName: string, user: User): Promise<Group>
     members: [{
       uid: user.uid,
       displayName: user.displayName || 'Anonymous',
-      joinedAt: now as any, // Use regular Date instead of serverTimestamp inside array
+      isAdmin: true, // Group creator is admin
+      joinedAt: now as any,
     }],
   };
 
   const docRef = await addDoc(collection(db, 'groups'), groupData);
-  return { ...groupData, id: docRef.id };
+  const group = { ...groupData, id: docRef.id };
+  
+  // Automatically create player card for group creator
+  await createAutoPlayerCard(docRef.id, user);
+  
+  return group;
 }
 
 // Join an existing group
@@ -90,10 +96,11 @@ export async function joinGroup(code: string, user: User): Promise<Group | null>
   const isAlreadyMember = group.members.some(member => member.uid === user.uid);
   
   if (!isAlreadyMember) {
-    const newMember: GroupMember = {
+    const newMember = {
       uid: user.uid,
       displayName: user.displayName || 'Anonymous',
-      joinedAt: new Date() as any, // Use regular Date instead of serverTimestamp inside array
+      isAdmin: false, // New members are not admin by default
+      joinedAt: new Date() as any,
     };
     
     const updatedMembers = [...group.members, newMember];
@@ -101,6 +108,9 @@ export async function joinGroup(code: string, user: User): Promise<Group | null>
       ...group, 
       members: updatedMembers 
     });
+    
+    // Automatically create player card for new member
+    await createAutoPlayerCard(group.id, user);
     
     return { ...group, members: updatedMembers };
   }
@@ -125,23 +135,33 @@ export async function getUserGroups(userId: string): Promise<Group[]> {
   return userGroups;
 }
 
-// Create a player card in a group
-export async function createPlayerCard(groupId: string, playerData: Omit<PlayerCard, 'id' | 'groupId' | 'createdBy' | 'createdAt'>, user: User): Promise<PlayerCard> {
+// Automatically create a player card when user joins group
+export async function createAutoPlayerCard(groupId: string, user: User): Promise<PlayerCard> {
   const cardData: Omit<PlayerCard, 'id'> = {
-    ...playerData,
-    groupId,
-    createdBy: user.uid,
+    uid: user.uid,
+    name: user.displayName || 'Player',
+    club: 'Street FC', // Default club
+    profilePic: '⚽',
+    pace: 75,
+    shooting: 75,
+    passing: 75,
+    dribbling: 75,
+    defense: 75,
+    physical: 75,
+    overall: 75, // Default rating
     createdAt: serverTimestamp() as Timestamp,
+    updatedAt: serverTimestamp() as Timestamp,
   };
 
-  const docRef = await addDoc(collection(db, 'playerCards'), cardData);
-  return { ...cardData, id: docRef.id };
+  // Use user's UID as the document ID
+  await setDoc(doc(db, 'groups', groupId, 'players', user.uid), cardData);
+  return { ...cardData, id: user.uid };
 }
 
 // Get all player cards for a group
 export async function getGroupPlayerCards(groupId: string): Promise<PlayerCard[]> {
-  const cardsQuery = query(collection(db, 'playerCards'), where('groupId', '==', groupId));
-  const querySnapshot = await getDocs(cardsQuery);
+  const playersQuery = collection(db, 'groups', groupId, 'players');
+  const querySnapshot = await getDocs(playersQuery);
   
   const cards: PlayerCard[] = [];
   querySnapshot.forEach(doc => {
@@ -164,8 +184,8 @@ export function subscribeToGroup(groupId: string, callback: (group: Group | null
 
 // Subscribe to real-time player cards updates
 export function subscribeToGroupPlayerCards(groupId: string, callback: (cards: PlayerCard[]) => void) {
-  const cardsQuery = query(collection(db, 'playerCards'), where('groupId', '==', groupId));
-  return onSnapshot(cardsQuery, (snapshot) => {
+  const playersQuery = collection(db, 'groups', groupId, 'players');
+  return onSnapshot(playersQuery, (snapshot) => {
     const cards: PlayerCard[] = [];
     snapshot.forEach(doc => {
       cards.push({ id: doc.id, ...doc.data() } as PlayerCard);
@@ -174,14 +194,18 @@ export function subscribeToGroupPlayerCards(groupId: string, callback: (cards: P
   });
 }
 
-// Update a player card
-export async function updatePlayerCard(cardId: string, updates: Partial<Omit<PlayerCard, 'id' | 'groupId' | 'createdBy' | 'createdAt'>>): Promise<void> {
-  await updateDoc(doc(db, 'playerCards', cardId), updates);
+// Update a player card (admin can update any card, user can only update their own)
+export async function updatePlayerCard(groupId: string, playerId: string, updates: Partial<Omit<PlayerCard, 'id' | 'uid' | 'createdAt'>>, currentUser: User): Promise<void> {
+  const updateData = {
+    ...updates,
+    updatedAt: serverTimestamp() as Timestamp,
+  };
+  await updateDoc(doc(db, 'groups', groupId, 'players', playerId), updateData);
 }
 
-// Delete a player card
-export async function deletePlayerCard(cardId: string): Promise<void> {
-  await deleteDoc(doc(db, 'playerCards', cardId));
+// Delete a player card (admin only)
+export async function deletePlayerCard(groupId: string, playerId: string): Promise<void> {
+  await deleteDoc(doc(db, 'groups', groupId, 'players', playerId));
 }
 
 // Generate balanced teams based on player stats
@@ -210,7 +234,7 @@ function generateBalancedTeams(players: PlayerCard[], numberOfTeams: number): { 
   // Distribute players using snake draft (1-2-3-3-2-1 pattern for 3 teams)
   sortedPlayers.forEach((player, index) => {
     const teamIndex = index % numberOfTeams;
-    teams[teamIndex].players.push(player.id);
+    teams[teamIndex].players.push(player.uid);
     
     // Add to team stats
     teams[teamIndex].totalStats.pace += player.pace;
@@ -242,27 +266,27 @@ function generateBalancedTeams(players: PlayerCard[], numberOfTeams: number): { 
 // Create a new match with team generation
 export async function createMatch(groupId: string, matchData: CreateMatch, allPlayers: PlayerCard[], user: User): Promise<Match> {
   // Get selected players
-  const selectedPlayers = allPlayers.filter(player => matchData.selectedPlayerIds.includes(player.id));
+  const selectedPlayers = allPlayers.filter(player => matchData.selectedPlayerIds.includes(player.uid));
   
   // Generate balanced teams
   const teams = generateBalancedTeams(selectedPlayers, matchData.numberOfTeams);
   
   const fullMatchData: Omit<Match, 'id'> = {
     ...matchData,
-    groupId,
     createdBy: user.uid,
     teams,
     status: "draft",
     createdAt: serverTimestamp() as Timestamp,
+    updatedAt: serverTimestamp() as Timestamp,
   };
 
-  const docRef = await addDoc(collection(db, 'matches'), fullMatchData);
+  const docRef = await addDoc(collection(db, 'groups', groupId, 'matches'), fullMatchData);
   return { ...fullMatchData, id: docRef.id };
 }
 
 // Get all matches for a group
 export async function getGroupMatches(groupId: string): Promise<Match[]> {
-  const matchesQuery = query(collection(db, 'matches'), where('groupId', '==', groupId));
+  const matchesQuery = collection(db, 'groups', groupId, 'matches');
   const querySnapshot = await getDocs(matchesQuery);
   
   const matches: Match[] = [];
@@ -275,7 +299,7 @@ export async function getGroupMatches(groupId: string): Promise<Match[]> {
 
 // Subscribe to real-time match updates
 export function subscribeToGroupMatches(groupId: string, callback: (matches: Match[]) => void) {
-  const matchesQuery = query(collection(db, 'matches'), where('groupId', '==', groupId));
+  const matchesQuery = collection(db, 'groups', groupId, 'matches');
   return onSnapshot(matchesQuery, (snapshot) => {
     const matches: Match[] = [];
     snapshot.forEach(doc => {
@@ -285,14 +309,60 @@ export function subscribeToGroupMatches(groupId: string, callback: (matches: Mat
   });
 }
 
-// Update a match
-export async function updateMatch(matchId: string, updates: Partial<Omit<Match, 'id' | 'groupId' | 'createdBy' | 'createdAt'>>): Promise<void> {
-  await updateDoc(doc(db, 'matches', matchId), updates);
+// Update a match (admin only)
+export async function updateMatch(groupId: string, matchId: string, updates: Partial<Omit<Match, 'id' | 'createdBy' | 'createdAt'>>): Promise<void> {
+  const updateData = {
+    ...updates,
+    updatedAt: serverTimestamp() as Timestamp,
+  };
+  await updateDoc(doc(db, 'groups', groupId, 'matches', matchId), updateData);
 }
 
-// Delete a match
-export async function deleteMatch(matchId: string): Promise<void> {
-  await deleteDoc(doc(db, 'matches', matchId));
+// Delete a match (admin only)
+export async function deleteMatch(groupId: string, matchId: string): Promise<void> {
+  await deleteDoc(doc(db, 'groups', groupId, 'matches', matchId));
+}
+
+// Promote user to admin (admin only)
+export async function promoteToAdmin(groupId: string, userId: string): Promise<void> {
+  const groupRef = doc(db, 'groups', groupId);
+  const groupSnap = await getDoc(groupRef);
+  
+  if (!groupSnap.exists()) {
+    throw new Error('Group not found');
+  }
+  
+  const group = { id: groupSnap.id, ...groupSnap.data() } as Group;
+  const updatedMembers = group.members.map(member => 
+    member.uid === userId ? { ...member, isAdmin: true } : member
+  );
+  
+  await updateDoc(groupRef, { members: updatedMembers });
+}
+
+// Check if user is admin in group
+export function isUserAdmin(group: Group, userId: string): boolean {
+  const member = group.members.find(m => m.uid === userId);
+  return member?.isAdmin === true;
+}
+
+// Shuffle teams in a match (admin only)
+export async function shuffleMatchTeams(groupId: string, matchId: string, allPlayers: PlayerCard[]): Promise<void> {
+  const matchRef = doc(db, 'groups', groupId, 'matches', matchId);
+  const matchSnap = await getDoc(matchRef);
+  
+  if (!matchSnap.exists()) {
+    throw new Error('Match not found');
+  }
+  
+  const match = { id: matchSnap.id, ...matchSnap.data() } as Match;
+  const selectedPlayers = allPlayers.filter(player => match.selectedPlayerIds.includes(player.uid));
+  const newTeams = generateBalancedTeams(selectedPlayers, match.numberOfTeams);
+  
+  await updateDoc(matchRef, {
+    teams: newTeams,
+    updatedAt: serverTimestamp() as Timestamp,
+  });
 }
 
 // Auth state listener

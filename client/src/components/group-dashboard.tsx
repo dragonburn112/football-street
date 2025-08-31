@@ -1,18 +1,18 @@
 import { useState, useEffect } from "react";
 import { User } from "firebase/auth";
 import { Group, PlayerCard, CreatePlayerCard, Match, CreateMatch } from "@shared/schema";
-import { subscribeToGroup, subscribeToGroupPlayerCards, createPlayerCard, updatePlayerCard, deletePlayerCard, subscribeToGroupMatches, createMatch } from "@/lib/firebase";
-import { generateBalancedTeams } from "@/lib/team-balancer";
+import { subscribeToGroup, subscribeToGroupPlayerCards, updatePlayerCard, deletePlayerCard, subscribeToGroupMatches, createMatch, isUserAdmin, promoteToAdmin } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import PlayerForm from "./player-form";
 import PlayerCardView from "./player-card";
 import TeamGenerator from "./team-generator";
 import EditPlayerForm from "./edit-player-form";
 import CreateMatchForm from "./create-match";
 import MatchDisplay from "./match-display";
+import AdminPanel from "./admin-panel";
+import MatchTab from "./match-tab";
 import { useToast } from "@/hooks/use-toast";
 
 interface GroupDashboardProps {
@@ -25,10 +25,13 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
   const [group, setGroup] = useState<Group | null>(null);
   const [playerCards, setPlayerCards] = useState<PlayerCard[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
-  const [showCreatePlayer, setShowCreatePlayer] = useState(false);
   const [showTeamGenerator, setShowTeamGenerator] = useState(false);
   const [showCreateMatch, setShowCreateMatch] = useState(false);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [viewingMatch, setViewingMatch] = useState<Match | null>(null);
   const [editingPlayer, setEditingPlayer] = useState<PlayerCard | null>(null);
+  
+  const userIsAdmin = group ? isUserAdmin(group, user.uid) : false;
   const { toast } = useToast();
 
   useEffect(() => {
@@ -43,18 +46,17 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
     };
   }, [groupId]);
 
-  const handleCreatePlayer = async (playerData: CreatePlayerCard) => {
+  const handlePromoteToAdmin = async (userId: string) => {
     try {
-      await createPlayerCard(groupId, playerData, user);
-      setShowCreatePlayer(false);
+      await promoteToAdmin(groupId, userId);
       toast({
         title: "Success",
-        description: "Player card created!",
+        description: "User promoted to admin!",
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to create player card",
+        description: "Failed to promote user",
         variant: "destructive",
       });
     }
@@ -71,7 +73,7 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
     if (!editingPlayer) return;
     
     try {
-      await updatePlayerCard(editingPlayer.id, updates);
+      await updatePlayerCard(groupId, editingPlayer.id, updates, user);
       setEditingPlayer(null);
       toast({
         title: "Success",
@@ -88,7 +90,7 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
 
   const handleDeletePlayer = async (playerId: string) => {
     try {
-      await deletePlayerCard(playerId);
+      await deletePlayerCard(groupId, playerId);
       toast({
         title: "Success",
         description: "Player card deleted!",
@@ -131,27 +133,6 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
     );
   }
 
-  if (showCreatePlayer) {
-    return (
-      <div className="min-h-screen bg-background px-4 py-8">
-        <div className="max-w-2xl mx-auto">
-          <Button 
-            data-testid="button-back-to-group"
-            onClick={() => setShowCreatePlayer(false)}
-            variant="ghost"
-            className="mb-4 p-0 h-auto text-muted-foreground"
-          >
-            <i className="fas fa-arrow-left mr-2"></i>
-            Back to Group
-          </Button>
-          <PlayerForm 
-            onCreatePlayer={handleCreatePlayer}
-            isLoading={false}
-          />
-        </div>
-      </div>
-    );
-  }
 
   if (editingPlayer) {
     return (
@@ -171,6 +152,30 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
         onCreateMatch={handleCreateMatch}
         onCancel={() => setShowCreateMatch(false)}
         isLoading={false}
+      />
+    );
+  }
+
+  if (showAdminPanel) {
+    return (
+      <AdminPanel 
+        user={user}
+        group={group}
+        players={playerCards}
+        matches={matches}
+        onClose={() => setShowAdminPanel(false)}
+      />
+    );
+  }
+
+  if (viewingMatch) {
+    return (
+      <MatchTab 
+        match={viewingMatch}
+        players={playerCards}
+        group={group}
+        user={user}
+        onClose={() => setViewingMatch(null)}
       />
     );
   }
@@ -247,19 +252,9 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
         {/* Action Buttons */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <Button 
-            data-testid="button-create-player"
-            onClick={() => setShowCreatePlayer(true)}
-            className="flex items-center gap-2 py-6 text-base"
-          >
-            <i className="fas fa-plus"></i>
-            Create Player
-          </Button>
-          
-          <Button 
             data-testid="button-create-match"
             onClick={() => setShowCreateMatch(true)}
             disabled={playerCards.length < 4}
-            variant="outline"
             className="flex items-center gap-2 py-6 text-base"
           >
             <i className="fas fa-futbol"></i>
@@ -276,6 +271,18 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
             <i className="fas fa-random"></i>
             Fair Teams
           </Button>
+          
+          {userIsAdmin && (
+            <Button 
+              data-testid="button-admin-panel"
+              onClick={() => setShowAdminPanel(true)}
+              variant="outline"
+              className="flex items-center gap-2 py-6 text-base"
+            >
+              <i className="fas fa-cog"></i>
+              Admin Panel
+            </Button>
+          )}
         </div>
 
 
@@ -300,7 +307,8 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
                   key={match.id}
                   match={match}
                   players={playerCards}
-                  canEdit={match.createdBy === user.uid}
+                  onView={() => setViewingMatch(match)}
+                  canEdit={userIsAdmin}
                 />
               ))}
             </div>
@@ -320,7 +328,7 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
             <Card>
               <CardContent className="text-center py-12">
                 <i className="fas fa-user-plus text-muted-foreground text-4xl mb-4"></i>
-                <p className="text-muted-foreground">No player cards yet. Create your first player!</p>
+                <p className="text-muted-foreground">Player cards are created automatically when members join the group!</p>
               </CardContent>
             </Card>
           ) : (
@@ -329,8 +337,10 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
                 <PlayerCardView
                   key={player.id}
                   player={player}
-                  onEdit={handleEditPlayer}
-                  onDelete={handleDeletePlayer}
+                  onEdit={userIsAdmin || player.uid === user.uid ? handleEditPlayer : undefined}
+                  onDelete={userIsAdmin ? handleDeletePlayer : undefined}
+                  isOwner={player.uid === user.uid}
+                  canEdit={userIsAdmin || player.uid === user.uid}
                 />
               ))}
             </div>

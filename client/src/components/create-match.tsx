@@ -214,11 +214,11 @@ export default function CreateMatch({ players, onCreateMatch, onCancel, isLoadin
                     
                     <div className="space-y-3 max-h-96 overflow-y-auto">
                       {players.map((player) => (
-                        <div key={player.id} className="flex items-center space-x-3 p-3 border rounded-lg">
+                        <div key={player.uid} className="flex items-center space-x-3 p-3 border rounded-lg">
                           <Checkbox
-                            data-testid={`checkbox-player-${player.id}`}
-                            checked={selectedPlayers.includes(player.id)}
-                            onCheckedChange={(checked) => handlePlayerSelection(player.id, checked as boolean)}
+                            data-testid={`checkbox-player-${player.uid}`}
+                            checked={selectedPlayers.includes(player.uid)}
+                            onCheckedChange={(checked) => handlePlayerSelection(player.uid, checked as boolean)}
                           />
                           <div className="flex items-center gap-3 flex-1">
                             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">

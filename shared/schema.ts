@@ -2,10 +2,10 @@ import { z } from "zod";
 
 // Firebase-based schemas (no longer using Drizzle for storage)
 export const playerCardSchema = z.object({
-  id: z.string(),
-  groupId: z.string(),
-  createdBy: z.string(),
+  id: z.string(), // This will be the user's UID
+  uid: z.string(), // User ID who owns this card
   name: z.string().min(1, "Player name is required"),
+  club: z.string().min(1, "Club name is required"),
   profilePic: z.string().optional(), // URL or emoji for profile picture
   pace: z.number().min(1).max(99),
   shooting: z.number().min(1).max(99),
@@ -15,13 +15,14 @@ export const playerCardSchema = z.object({
   physical: z.number().min(1).max(99),
   overall: z.number().min(1).max(99),
   createdAt: z.any(), // Firebase Timestamp
+  updatedAt: z.any(), // Firebase Timestamp
 });
 
 export const createPlayerCardSchema = playerCardSchema.omit({
   id: true,
-  groupId: true,
-  createdBy: true,
+  uid: true,
   createdAt: true,
+  updatedAt: true,
 });
 
 export const groupSchema = z.object({
@@ -33,6 +34,7 @@ export const groupSchema = z.object({
   members: z.array(z.object({
     uid: z.string(),
     displayName: z.string(),
+    isAdmin: z.boolean().default(false),
     joinedAt: z.any(), // Firebase Timestamp
   })),
 });
@@ -47,15 +49,14 @@ export const joinGroupSchema = z.object({
 
 export const matchSchema = z.object({
   id: z.string(),
-  groupId: z.string(),
   createdBy: z.string(),
   name: z.string().min(1, "Match name is required"),
   numberOfTeams: z.number().min(2).max(3),
   playersPerTeam: z.number().min(3).max(11),
-  selectedPlayerIds: z.array(z.string()),
+  selectedPlayerIds: z.array(z.string()), // UIDs of selected players
   teams: z.array(z.object({
     name: z.string(),
-    players: z.array(z.string()), // player IDs
+    players: z.array(z.string()), // player UIDs
     totalStats: z.object({
       pace: z.number(),
       shooting: z.number(),
@@ -68,13 +69,14 @@ export const matchSchema = z.object({
   })),
   status: z.enum(["draft", "active", "completed"]).default("draft"),
   createdAt: z.any(), // Firebase Timestamp
+  updatedAt: z.any(), // Firebase Timestamp
 });
 
 export const createMatchSchema = matchSchema.omit({
   id: true,
-  groupId: true,
   createdBy: true,
   createdAt: true,
+  updatedAt: true,
   teams: true,
   status: true,
 });
