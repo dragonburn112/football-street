@@ -5,7 +5,6 @@ export const playerCardSchema = z.object({
   id: z.string(), // This will be the user's UID
   uid: z.string(), // User ID who owns this card
   name: z.string().min(1, "Player name is required"),
-  club: z.string().min(1, "Club name is required"),
   profilePic: z.string().optional(), // URL or emoji for profile picture
   pace: z.number().min(1).max(99),
   shooting: z.number().min(1).max(99),
@@ -29,7 +28,6 @@ export const createPlayerCardSchema = playerCardSchema.omit({
 export const unassignedPlayerCardSchema = z.object({
   id: z.string(), // Unique ID for the unassigned card
   name: z.string().min(1, "Player name is required"),
-  club: z.string().min(1, "Club name is required"),
   profilePic: z.string().optional(), // URL or emoji for profile picture
   pace: z.number().min(1).max(99),
   shooting: z.number().min(1).max(99),
@@ -51,7 +49,6 @@ export const createUnassignedPlayerCardSchema = unassignedPlayerCardSchema.omit(
 // Schema for player form that works with both assigned and unassigned cards
 export const playerFormSchema = z.object({
   name: z.string().min(1, "Player name is required"),
-  club: z.string().min(1, "Club name is required"),
   profilePic: z.string().optional(),
   pace: z.number().min(1).max(99),
   shooting: z.number().min(1).max(99),

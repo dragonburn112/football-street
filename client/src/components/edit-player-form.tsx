@@ -24,7 +24,6 @@ export default function EditPlayerForm({ player, onUpdatePlayer, onCancel, isLoa
     resolver: zodResolver(createPlayerCardSchema),
     defaultValues: {
       name: player.name,
-      club: "Street FC",
       profilePic: player.profilePic || "⚽",
       pace: player.pace,
       shooting: player.shooting,

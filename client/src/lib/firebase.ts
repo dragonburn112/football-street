@@ -224,7 +224,6 @@ export async function createAutoPlayerCard(groupId: string, user: User): Promise
     const cardData: Omit<PlayerCard, 'id'> = {
       uid: user.uid,
       name: user.displayName || 'Player',
-      club: 'Street FC', // Default club
       profilePic: '⚽',
       pace: 75,
       shooting: 75,
@@ -577,7 +576,6 @@ export async function assignPlayerCardToMember(groupId: string, unassignedCardId
     const assignedCardData: Omit<PlayerCard, 'id'> = {
       uid: memberUid,
       name: unassignedCard.name,
-      club: unassignedCard.club,
       profilePic: unassignedCard.profilePic,
       pace: unassignedCard.pace,
       shooting: unassignedCard.shooting,

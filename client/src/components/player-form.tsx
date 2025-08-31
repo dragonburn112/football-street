@@ -18,7 +18,6 @@ export default function PlayerForm({ onCreatePlayer, isLoading, selectedMemberNa
     resolver: zodResolver(playerFormSchema),
     defaultValues: {
       name: "",
-      club: "Street FC",
       profilePic: "⚽",
       pace: 50,
       shooting: 50,
@@ -84,23 +83,6 @@ export default function PlayerForm({ onCreatePlayer, isLoading, selectedMemberNa
               />
               
               
-              <FormField
-                control={form.control}
-                name="club"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Club Name</FormLabel>
-                    <FormControl>
-                      <Input 
-                        data-testid="input-club-name"
-                        placeholder="Enter club name" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               <FormField
                 control={form.control}
