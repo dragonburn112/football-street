@@ -50,16 +50,8 @@ export default function MyCardsTab({ user, groupId, group, onBack }: MyCardsTabP
   }
 
   return (
-    <div className="min-h-screen bg-background px-4 py-8">
+    <div className="min-h-screen bg-background px-4 py-8 pb-20">
       <div className="max-w-4xl mx-auto">
-        <button 
-          data-testid="button-back-my-cards"
-          onClick={onBack}
-          className="mb-6 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <i className="fas fa-arrow-left"></i>
-          Back to Group
-        </button>
 
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">My Player Card</h1>
@@ -74,7 +66,6 @@ export default function MyCardsTab({ user, groupId, group, onBack }: MyCardsTabP
               <div className="w-full max-w-sm">
                 <PlayerCardView 
                   player={myCard}
-                  showStats={false}
                 />
               </div>
             </div>
@@ -132,28 +123,28 @@ export default function MyCardsTab({ user, groupId, group, onBack }: MyCardsTabP
                     <div className="flex items-center justify-between p-3 bg-card/50 rounded-lg border">
                       <span className="text-sm text-muted-foreground">Goals per Match</span>
                       <Badge variant="outline">
-                        {myCard.matchesPlayed > 0 ? (myCard.goals / myCard.matchesPlayed).toFixed(2) : '0.00'}
+                        {myCard.matchesPlayed > 0 ? ((myCard.goals || 0) / myCard.matchesPlayed).toFixed(2) : '0.00'}
                       </Badge>
                     </div>
 
                     <div className="flex items-center justify-between p-3 bg-card/50 rounded-lg border">
                       <span className="text-sm text-muted-foreground">Assists per Match</span>
                       <Badge variant="outline">
-                        {myCard.matchesPlayed > 0 ? (myCard.assists / myCard.matchesPlayed).toFixed(2) : '0.00'}
+                        {myCard.matchesPlayed > 0 ? ((myCard.assists || 0) / myCard.matchesPlayed).toFixed(2) : '0.00'}
                       </Badge>
                     </div>
 
                     <div className="flex items-center justify-between p-3 bg-card/50 rounded-lg border">
                       <span className="text-sm text-muted-foreground">MVP Rate</span>
                       <Badge variant="outline">
-                        {myCard.matchesPlayed > 0 ? ((myCard.mvps / myCard.matchesPlayed) * 100).toFixed(1) : '0.0'}%
+                        {myCard.matchesPlayed > 0 ? (((myCard.mvps || 0) / myCard.matchesPlayed) * 100).toFixed(1) : '0.0'}%
                       </Badge>
                     </div>
 
                     <div className="flex items-center justify-between p-3 bg-card/50 rounded-lg border">
                       <span className="text-sm text-muted-foreground">Goal Contribution</span>
                       <Badge variant="outline">
-                        {myCard.goals + myCard.assists}
+                        {(myCard.goals || 0) + (myCard.assists || 0)}
                       </Badge>
                     </div>
 

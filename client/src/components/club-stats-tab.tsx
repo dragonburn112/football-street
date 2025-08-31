@@ -116,16 +116,8 @@ export default function ClubStatsTab({ user, groupId, group, onBack }: ClubStats
   }
 
   return (
-    <div className="min-h-screen bg-background px-4 py-8">
+    <div className="min-h-screen bg-background px-4 py-8 pb-20">
       <div className="max-w-6xl mx-auto">
-        <button 
-          data-testid="button-back-club-stats"
-          onClick={onBack}
-          className="mb-6 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <i className="fas fa-arrow-left"></i>
-          Back to Group
-        </button>
 
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">Club Player Statistics</h1>

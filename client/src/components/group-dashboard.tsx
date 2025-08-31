@@ -18,6 +18,7 @@ import PlayerForm from "./player-form";
 import MyCardsTab from "./my-cards-tab";
 import ClubStatsTab from "./club-stats-tab";
 import MVPVoting from "./mvp-voting";
+import BottomNavigation, { BottomNavBar } from "./bottom-navigation";
 import { useToast } from "@/hooks/use-toast";
 
 interface GroupDashboardProps {
@@ -40,6 +41,7 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
   const [showMyCards, setShowMyCards] = useState(false);
   const [showClubStats, setShowClubStats] = useState(false);
   const [showMVPVoting, setShowMVPVoting] = useState<{ match: Match; show: boolean }>({ match: null as any, show: false });
+  const [activeTab, setActiveTab] = useState<"dashboard" | "mycard" | "clubstats">("dashboard");
   
   const userIsAdmin = group ? isUserAdmin(group, user.uid) : false;
   const { toast } = useToast();
@@ -321,25 +323,32 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
     );
   }
 
-  if (showMyCards) {
+  // Handle bottom navigation
+  if (activeTab === "mycard") {
     return (
-      <MyCardsTab
-        user={user}
-        groupId={groupId}
-        group={group}
-        onBack={() => setShowMyCards(false)}
-      />
+      <>
+        <MyCardsTab
+          user={user}
+          groupId={groupId}
+          group={group}
+          onBack={() => setActiveTab("dashboard")}
+        />
+        <BottomNavBar activeTab={activeTab} onTabChange={setActiveTab} />
+      </>
     );
   }
 
-  if (showClubStats) {
+  if (activeTab === "clubstats") {
     return (
-      <ClubStatsTab
-        user={user}
-        groupId={groupId}
-        group={group}
-        onBack={() => setShowClubStats(false)}
-      />
+      <>
+        <ClubStatsTab
+          user={user}
+          groupId={groupId}
+          group={group}
+          onBack={() => setActiveTab("dashboard")}
+        />
+        <BottomNavBar activeTab={activeTab} onTabChange={setActiveTab} />
+      </>
     );
   }
 
@@ -369,7 +378,7 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
   }
 
   return (
-    <div className="min-h-screen bg-background px-4 py-6">
+    <div className="min-h-screen bg-background px-4 py-6 pb-20">
       {/* Header */}
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-6">
@@ -469,28 +478,6 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
             )}
           </div>
 
-          {/* New Feature Buttons */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Button 
-              data-testid="button-my-cards"
-              onClick={() => setShowMyCards(true)}
-              variant="outline"
-              className="flex items-center gap-2 py-6 text-base"
-            >
-              <i className="fas fa-id-card text-blue-500"></i>
-              My Player Card
-            </Button>
-            
-            <Button 
-              data-testid="button-club-stats"
-              onClick={() => setShowClubStats(true)}
-              variant="outline"
-              className="flex items-center gap-2 py-6 text-base"
-            >
-              <i className="fas fa-chart-bar text-green-500"></i>
-              Club Player Stats
-            </Button>
-          </div>
         </div>
 
 
@@ -591,6 +578,9 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
           )}
         </div>
       </div>
+      
+      {/* Bottom Navigation */}
+      <BottomNavBar activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
   );
 }
