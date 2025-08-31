@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { User } from "firebase/auth";
 import { Group, PlayerCard, CreatePlayerCard, Match, CreateMatch } from "@shared/schema";
-import { subscribeToGroup, subscribeToGroupPlayerCards, updatePlayerCard, deletePlayerCard, subscribeToGroupMatches, createMatch, isUserAdmin, promoteToAdmin } from "@/lib/firebase";
+import { subscribeToGroup, subscribeToGroupPlayerCards, updatePlayerCard, deletePlayerCard, subscribeToGroupMatches, createMatch, isUserAdmin, promoteToAdmin, leaveGroup } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -121,6 +121,26 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
     }
   };
 
+  const handleLeaveGroup = async () => {
+    const confirmed = confirm(`Are you sure you want to leave the group "${group?.name}"? You will lose access to all group content and your player card will be removed.`);
+    if (!confirmed) return;
+    
+    try {
+      await leaveGroup(groupId, user.uid);
+      toast({
+        title: "Left Group",
+        description: "You have successfully left the group.",
+      });
+      onLeaveGroup();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to leave group",
+        variant: "destructive",
+      });
+    }
+  };
+
 
   if (!group) {
     return (
@@ -164,6 +184,7 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
         players={playerCards}
         matches={matches}
         onClose={() => setShowAdminPanel(false)}
+        onGroupDeleted={onLeaveGroup}
       />
     );
   }
@@ -205,13 +226,13 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <Button 
-            data-testid="button-leave-group"
+            data-testid="button-back-to-groups"
             onClick={onLeaveGroup}
             variant="ghost"
             className="p-0 h-auto text-muted-foreground"
           >
             <i className="fas fa-arrow-left mr-2"></i>
-            Leave
+            Back to Groups
           </Button>
         </div>
 
@@ -250,39 +271,51 @@ export default function GroupDashboard({ user, groupId, onLeaveGroup }: GroupDas
         </Card>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <Button 
-            data-testid="button-create-match"
-            onClick={() => setShowCreateMatch(true)}
-            disabled={playerCards.length < 4}
-            className="flex items-center gap-2 py-6 text-base"
-          >
-            <i className="fas fa-futbol"></i>
-            Create Match
-          </Button>
-          
-          <Button 
-            data-testid="button-generate-teams"
-            onClick={() => setShowTeamGenerator(true)}
-            disabled={playerCards.length < 2}
-            variant="outline"
-            className="flex items-center gap-2 py-6 text-base"
-          >
-            <i className="fas fa-random"></i>
-            Fair Teams
-          </Button>
-          
-          {userIsAdmin && (
+        <div className="space-y-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Button 
-              data-testid="button-admin-panel"
-              onClick={() => setShowAdminPanel(true)}
+              data-testid="button-create-match"
+              onClick={() => setShowCreateMatch(true)}
+              disabled={playerCards.length < 4}
+              className="flex items-center gap-2 py-6 text-base"
+            >
+              <i className="fas fa-futbol"></i>
+              Create Match
+            </Button>
+            
+            <Button 
+              data-testid="button-generate-teams"
+              onClick={() => setShowTeamGenerator(true)}
+              disabled={playerCards.length < 2}
               variant="outline"
               className="flex items-center gap-2 py-6 text-base"
             >
-              <i className="fas fa-cog"></i>
-              Admin Panel
+              <i className="fas fa-random"></i>
+              Fair Teams
             </Button>
-          )}
+            
+            {userIsAdmin ? (
+              <Button 
+                data-testid="button-admin-panel"
+                onClick={() => setShowAdminPanel(true)}
+                variant="outline"
+                className="flex items-center gap-2 py-6 text-base"
+              >
+                <i className="fas fa-cog"></i>
+                Admin Panel
+              </Button>
+            ) : (
+              <Button 
+                data-testid="button-leave-group"
+                onClick={handleLeaveGroup}
+                variant="outline"
+                className="flex items-center gap-2 py-6 text-base text-destructive hover:text-destructive"
+              >
+                <i className="fas fa-sign-out-alt"></i>
+                Leave Group
+              </Button>
+            )}
+          </div>
         </div>
 
 

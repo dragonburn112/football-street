@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { User } from "firebase/auth";
 import { type Group, type PlayerCard, type Match, type CreatePlayerCard } from "@shared/schema";
-import { promoteToAdmin, shuffleMatchTeams, deleteMatch, createPlayerCardForMember } from "@/lib/firebase";
+import { promoteToAdmin, shuffleMatchTeams, deleteMatch, createPlayerCardForMember, deleteGroup } from "@/lib/firebase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,9 +15,10 @@ interface AdminPanelProps {
   players: PlayerCard[];
   matches: Match[];
   onClose: () => void;
+  onGroupDeleted: () => void;
 }
 
-export default function AdminPanel({ user, group, players, matches, onClose }: AdminPanelProps) {
+export default function AdminPanel({ user, group, players, matches, onClose, onGroupDeleted }: AdminPanelProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
   const [showCreatePlayer, setShowCreatePlayer] = useState(false);
@@ -111,6 +112,29 @@ export default function AdminPanel({ user, group, players, matches, onClose }: A
       toast({
         title: "Error",
         description: "Failed to create player card",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleDeleteGroup = async () => {
+    const confirmed = confirm(`Are you sure you want to delete the group "${group.name}"? This action cannot be undone and will remove all player cards, matches, and group data permanently.`);
+    if (!confirmed) return;
+    
+    setLoading('delete-group');
+    try {
+      await deleteGroup(group.id);
+      toast({
+        title: "Group Deleted",
+        description: "The group has been permanently deleted.",
+      });
+      onGroupDeleted();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete group",
         variant: "destructive",
       });
     } finally {
@@ -354,6 +378,37 @@ export default function AdminPanel({ user, group, players, matches, onClose }: A
                         ))}
                       </div>
                     )}
+                  </div>
+                  
+                  <div className="mt-8 pt-6 border-t border-destructive/20">
+                    <h3 className="font-medium mb-4 flex items-center gap-2 text-destructive">
+                      <i className="fas fa-exclamation-triangle"></i>
+                      Danger Zone
+                    </h3>
+                    <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/20">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="font-medium text-destructive mb-1">Delete Group</h4>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            Permanently delete this group and all its data. This action cannot be undone.
+                          </p>
+                        </div>
+                        <Button
+                          data-testid="button-delete-group"
+                          onClick={handleDeleteGroup}
+                          disabled={loading === 'delete-group'}
+                          variant="destructive"
+                          size="sm"
+                        >
+                          {loading === 'delete-group' ? (
+                            <i className="fas fa-spinner fa-spin mr-2"></i>
+                          ) : (
+                            <i className="fas fa-trash mr-2"></i>
+                          )}
+                          Delete Group
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </TabsContent>

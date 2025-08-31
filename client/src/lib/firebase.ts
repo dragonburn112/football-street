@@ -405,6 +405,57 @@ export async function shuffleMatchTeams(groupId: string, matchId: string, allPla
   });
 }
 
+// Delete entire group (admin only)
+export async function deleteGroup(groupId: string): Promise<void> {
+  try {
+    // First delete all subcollections (players and matches)
+    const playersQuery = collection(db, 'groups', groupId, 'players');
+    const playersSnapshot = await getDocs(playersQuery);
+    const playerDeletes = playersSnapshot.docs.map(doc => deleteDoc(doc.ref));
+    
+    const matchesQuery = collection(db, 'groups', groupId, 'matches');
+    const matchesSnapshot = await getDocs(matchesQuery);
+    const matchDeletes = matchesSnapshot.docs.map(doc => deleteDoc(doc.ref));
+    
+    // Wait for all subcollection deletions
+    await Promise.all([...playerDeletes, ...matchDeletes]);
+    
+    // Finally delete the main group document
+    await deleteDoc(doc(db, 'groups', groupId));
+  } catch (error) {
+    console.error('Error deleting group:', error);
+    throw error;
+  }
+}
+
+// Leave group (member function)
+export async function leaveGroup(groupId: string, userId: string): Promise<void> {
+  try {
+    const groupRef = doc(db, 'groups', groupId);
+    const groupSnap = await getDoc(groupRef);
+    
+    if (!groupSnap.exists()) {
+      throw new Error('Group not found');
+    }
+    
+    const group = { id: groupSnap.id, ...groupSnap.data() } as Group;
+    const updatedMembers = group.members.filter(member => member.uid !== userId);
+    
+    // Delete the user's player card if it exists
+    try {
+      await deleteDoc(doc(db, 'groups', groupId, 'players', userId));
+    } catch (error) {
+      // Player card might not exist, continue anyway
+      console.log('No player card to delete for leaving user');
+    }
+    
+    await updateDoc(groupRef, { members: updatedMembers });
+  } catch (error) {
+    console.error('Error leaving group:', error);
+    throw error;
+  }
+}
+
 // Auth state listener
 export function onAuthStateChange(callback: (user: User | null) => void) {
   return onAuthStateChanged(auth, callback);
