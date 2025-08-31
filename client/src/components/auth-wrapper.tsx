@@ -12,6 +12,7 @@ interface AuthWrapperProps {
 export default function AuthWrapper({ children }: AuthWrapperProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     // Handle redirect result first
@@ -50,9 +51,25 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {authError && (
+              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+                <p className="text-sm text-destructive font-medium">Authentication Setup Required</p>
+                <p className="text-xs text-destructive/80 mt-1">
+                  Please enable Google and Anonymous authentication in your Firebase console under Authentication → Sign-in method.
+                </p>
+              </div>
+            )}
+            
             <Button 
               data-testid="button-sign-in-google"
-              onClick={signInWithGoogle}
+              onClick={async () => {
+                try {
+                  setAuthError(null);
+                  await signInWithGoogle();
+                } catch (error: any) {
+                  setAuthError(error.message);
+                }
+              }}
               className="w-full flex items-center gap-3 text-base py-6"
             >
               <i className="fab fa-google text-lg"></i>
@@ -70,7 +87,14 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
             
             <Button 
               data-testid="button-sign-in-anonymous"
-              onClick={signInAsAnonymous}
+              onClick={async () => {
+                try {
+                  setAuthError(null);
+                  await signInAsAnonymous();
+                } catch (error: any) {
+                  setAuthError(error.message);
+                }
+              }}
               variant="outline"
               className="w-full flex items-center gap-3 text-base py-6"
             >

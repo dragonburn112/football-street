@@ -18,8 +18,24 @@ export const db = getFirestore(app);
 
 const provider = new GoogleAuthProvider();
 
-export const signInWithGoogle = () => signInWithRedirect(auth, provider);
-export const signInAsAnonymous = () => signInAnonymously(auth);
+export const signInWithGoogle = async () => {
+  try {
+    await signInWithRedirect(auth, provider);
+  } catch (error: any) {
+    console.error("Google sign-in error:", error);
+    throw error;
+  }
+};
+
+export const signInAsAnonymous = async () => {
+  try {
+    const result = await signInAnonymously(auth);
+    return result;
+  } catch (error: any) {
+    console.error("Anonymous sign-in error:", error);
+    throw error;
+  }
+};
 
 export interface Group {
   id: string;
