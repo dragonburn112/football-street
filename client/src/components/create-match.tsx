@@ -131,7 +131,7 @@ export default function CreateMatch({ players, onCreateMatch, onCancel, isLoadin
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+              <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
                 
                 {step === 'setup' && (
                   <div className="space-y-4">
@@ -291,7 +291,7 @@ export default function CreateMatch({ players, onCreateMatch, onCancel, isLoadin
                               </div>
                               <div>
                                 <div className="font-medium text-sm">{player.name}</div>
-                                <div className="text-xs text-muted-foreground">{player.position}</div>
+                                <div className="text-xs text-muted-foreground">{player.club}</div>
                               </div>
                             </div>
                           ))}
@@ -320,7 +320,7 @@ export default function CreateMatch({ players, onCreateMatch, onCancel, isLoadin
                               </div>
                               <div>
                                 <div className="font-medium text-sm">{player.name}</div>
-                                <div className="text-xs text-muted-foreground">{player.position}</div>
+                                <div className="text-xs text-muted-foreground">{player.club}</div>
                               </div>
                             </div>
                           ))}
@@ -365,15 +365,12 @@ export default function CreateMatch({ players, onCreateMatch, onCancel, isLoadin
                   ) : (
                     <Button 
                       data-testid="button-create-match"
-                      type="submit"
+                      type="button"
                       disabled={isLoading || selectedPlayers.length === 0}
                       className="flex-1 flex items-center gap-2"
-                      onClick={(e) => {
-                        console.log("Create match button clicked", { 
-                          selectedPlayers,
-                          formValues: form.getValues(),
-                          formState: form.formState
-                        });
+                      onClick={() => {
+                        const formData = form.getValues();
+                        handleSubmit({ ...formData, selectedPlayerIds: selectedPlayers });
                       }}
                     >
                       <i className="fas fa-futbol"></i>
