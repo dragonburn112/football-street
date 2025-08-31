@@ -36,7 +36,7 @@ export default function PlayerCardView({ player, onEdit, onDelete, isOwner, canE
   return (
     <div 
       data-testid={`card-player-${player.id}`}
-      className={`${getCardStyle()} rounded-lg p-3 relative transform transition-all duration-300 hover:scale-105 min-h-[280px] flex flex-col`}
+      className={`${getCardStyle()} rounded-lg p-3 relative transform transition-all duration-300 hover:scale-105`}
     >
       {/* Overall Rating */}
       <div className="text-center mb-2">
@@ -48,9 +48,9 @@ export default function PlayerCardView({ player, onEdit, onDelete, isOwner, canE
         </div>
       </div>
       
-      {/* Player Info */}
-      <div className="bg-white/10 rounded-lg p-2 mb-3 flex-shrink-0">
-        <div className="w-12 h-16 bg-white/20 rounded mx-auto mb-2 flex items-center justify-center">
+      {/* Player Info - More compact */}
+      <div className="bg-white/10 rounded-lg p-2 mb-2">
+        <div className="w-10 h-12 bg-white/20 rounded mx-auto mb-1 flex items-center justify-center">
           {player.profilePic ? (
             player.profilePic.startsWith('/objects/') ? (
               <img 
@@ -62,10 +62,10 @@ export default function PlayerCardView({ player, onEdit, onDelete, isOwner, canE
                 }}
               />
             ) : (
-              <span className="text-2xl">{player.profilePic}</span>
+              <span className="text-lg">{player.profilePic}</span>
             )
           ) : (
-            <i className="fas fa-user text-white/60 text-xl"></i>
+            <i className="fas fa-user text-white/60 text-sm"></i>
           )}
         </div>
         <div className="text-center">
@@ -77,13 +77,13 @@ export default function PlayerCardView({ player, onEdit, onDelete, isOwner, canE
           </div>
           <div 
             data-testid={`text-role-${player.id}`}
-            className={`text-xs mt-1 flex items-center justify-center gap-1 ${getRoleColor(player.overall)}`}
+            className={`text-xs mt-0.5 flex items-center justify-center gap-1 ${getRoleColor(player.overall)}`}
           >
             <span>{getPlayerRole(player).icon}</span>
             <span>{getPlayerRole(player).title}</span>
           </div>
           {isOwner && (
-            <div className="mt-1">
+            <div className="mt-0.5">
               <span className="text-xs bg-blue-500/20 text-blue-300 px-1 py-0.5 rounded">
                 You
               </span>
@@ -92,8 +92,8 @@ export default function PlayerCardView({ player, onEdit, onDelete, isOwner, canE
         </div>
       </div>
       
-      {/* Stats - Now with better spacing and background */}
-      <div className="bg-white/10 rounded-lg p-2 grid grid-cols-2 gap-1 text-xs text-white font-medium flex-grow">
+      {/* Stats - Moved much higher */}
+      <div className="bg-white/10 rounded-lg p-2 grid grid-cols-2 gap-y-1 gap-x-2 text-xs text-white font-medium">
         <div className="flex justify-between">
           <span className="font-bold">PAC</span>
           <span data-testid={`stat-pace-${player.id}`}>{player.pace}</span>
